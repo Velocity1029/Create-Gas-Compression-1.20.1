@@ -1,12 +1,19 @@
 package com.velocity1029.create_gas_compression;
 
 import com.mojang.logging.LogUtils;
-import com.velocity1029.create_gas_compression.blocks.ModBlocks;
-import com.velocity1029.create_gas_compression.items.ModItems;
+import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.item.ItemDescription;
+import com.simibubi.create.foundation.item.KineticStats;
+import com.simibubi.create.foundation.item.TooltipModifier;
 //import com.velocity1029.create_gas_compression.painting.ModPaintings;
 //import com.velocity1029.create_gas_compression.worldgen.biome.ModBiomes;
 //import com.velocity1029.create_gas_compression.worldgen.dimension.ModDimensions;
+import com.velocity1029.create_gas_compression.registry.BlockEntities;
+import com.velocity1029.create_gas_compression.registry.Blocks;
+import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -27,22 +34,39 @@ public class CreateGasCompression
     public static final String MODID = "create_gas_compression";
     private static final Logger LOGGER = LogUtils.getLogger();
 
+//    /**
+//     * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
+//     * {@link CreateRegistrate}.
+//     */
+    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID);
+//            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
+
+    static {
+        REGISTRATE.setTooltipModifierFactory(item ->
+                new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
+                        .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
+        );
+    }
+
     public CreateGasCompression(FMLJavaModLoadingContext context)
     {
-        IEventBus bus = context.getModEventBus();
+        IEventBus modEventBus = context.getModEventBus();
 
-        ModBlocks.register(bus);
-        ModItems.register(bus);
+        REGISTRATE.registerEventListeners(modEventBus);
 
+
+        modEventBus.addListener(this::commonSetup);
+
+        // Register ourselves for server and other game events we are interested in
+        MinecraftForge.EVENT_BUS.register(this);
+
+
+        Blocks.register();
+        BlockEntities.register();
 //        ModPaintings.register(bus);
 //
 //        ModBiomes.register(bus);
 //        ModDimensions.register();
-
-        bus.addListener(this::commonSetup);
-
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
