@@ -1,7 +1,6 @@
-package com.velocity1029.create_gas_compression.block;
+package com.velocity1029.create_gas_compression.blocks;
 
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 //import net.minecraft.world.level.material.MapColor;
 //import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -15,7 +14,7 @@ public class ModBlocks {
     // Create a Deferred Register to hold Items which will all be registered under the "arianes_dream" namespace
     public static final DeferredRegister<Block> REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
 
-//    public static final RegistryObject<Block> TESSERACT;
+    public static final RegistryObject<Block> NATURAL_GAS_ENGINE;
 //    public static final RegistryObject<Block> DUST;
 //    public static final RegistryObject<Block> DUST_BLOCK;
 //    public static final RegistryObject<Block> OUTCROPPING;

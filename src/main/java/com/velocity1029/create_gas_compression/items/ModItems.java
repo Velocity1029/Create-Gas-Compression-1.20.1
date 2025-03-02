@@ -1,12 +1,9 @@
-package com.velocity1029.create_gas_compression.item;
+package com.velocity1029.create_gas_compression.items;
 
-import com.velocity1029.create_gas_compression.block.ModBlocks;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
 import static com.velocity1029.create_gas_compression.CreateGasCompression.MODID;
 //import static com.velocity1029.create_gas_compression.CreateGasCompression.MOD_TAB;

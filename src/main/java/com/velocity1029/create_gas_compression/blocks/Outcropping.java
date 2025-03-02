@@ -1,4 +1,4 @@
-package com.velocity1029.create_gas_compression.block;
+package com.velocity1029.create_gas_compression.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

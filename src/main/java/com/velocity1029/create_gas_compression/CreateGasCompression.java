@@ -1,8 +1,8 @@
 package com.velocity1029.create_gas_compression;
 
 import com.mojang.logging.LogUtils;
-import com.velocity1029.create_gas_compression.block.ModBlocks;
-import com.velocity1029.create_gas_compression.item.ModItems;
+import com.velocity1029.create_gas_compression.blocks.ModBlocks;
+import com.velocity1029.create_gas_compression.items.ModItems;
 //import com.velocity1029.create_gas_compression.painting.ModPaintings;
 //import com.velocity1029.create_gas_compression.worldgen.biome.ModBiomes;
 //import com.velocity1029.create_gas_compression.worldgen.dimension.ModDimensions;
