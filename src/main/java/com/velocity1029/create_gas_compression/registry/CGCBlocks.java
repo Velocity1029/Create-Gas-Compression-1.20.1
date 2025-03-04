@@ -29,7 +29,6 @@ public class CGCBlocks {
                     .blockstate(new NaturalGasEngineGenerator()::generate)
                     .onRegister( BlockStressValues.setGeneratorSpeed(256, true))
                     .item()
-                    .properties(p -> p.rarity(Rarity.EPIC))
                     .transform(customItemModel())
                     .register();
 
