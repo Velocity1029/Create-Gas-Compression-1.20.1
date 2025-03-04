@@ -28,7 +28,7 @@ public enum Mods {
     }
 
     public ResourceLocation rl(String path) {
-        return ResourceLocation.parse(id+path);
+        return ResourceLocation.fromNamespaceAndPath(id, path);
     }
 
     public Block getBlock(String id) {

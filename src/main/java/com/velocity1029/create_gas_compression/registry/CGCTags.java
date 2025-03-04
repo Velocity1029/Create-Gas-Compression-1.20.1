@@ -28,7 +28,7 @@ public class CGCTags {
     }
 
     public static <T> TagKey<T> forgeTag(IForgeRegistry<T> registry, String path) {
-        return optionalTag(registry, ResourceLocation.parse("forge"+path));
+        return optionalTag(registry, ResourceLocation.fromNamespaceAndPath("forge", path));
     }
 
     public static TagKey<Block> forgeBlockTag(String path) {
@@ -110,7 +110,7 @@ public class CGCTags {
         }
 
         CGCFluidTags(NameSpace namespace, String path, boolean optional, boolean alwaysDatagen) {
-            ResourceLocation id = ResourceLocation.parse(namespace.id+(path == null ? Lang.asId(name()) : path));
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace.id, (path == null ? Lang.asId(name()) : path));
             if (optional) {
                 tag = optionalTag(ForgeRegistries.FLUIDS, id);
             } else {

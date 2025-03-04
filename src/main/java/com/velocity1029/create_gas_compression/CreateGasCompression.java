@@ -64,11 +64,13 @@ public class CreateGasCompression
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
+        REGISTRATE.setCreativeTab(CGCCreativeModeTabs.MAIN);
 
         CGCTags.init();
         CGCBlocks.register();
         CGCBlockEntities.register();
         CGCFluids.register();
+        CGCCreativeModeTabs.register(modEventBus);
 //        ModPaintings.register(bus);
 //
 //        ModBiomes.register(bus);
@@ -125,6 +127,6 @@ public class CreateGasCompression
     }
 
     public static ResourceLocation asResource(String path) {
-        return ResourceLocation.parse(MODID+path);
+        return ResourceLocation.fromNamespaceAndPath(MODID, path);
     }
 }
