@@ -1,11 +1,11 @@
 package com.velocity1029.create_gas_compression.blocks.engines.natural_gas;
 
-import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
+import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 
-import com.velocity1029.create_gas_compression.registry.BlockEntities;
+import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -22,6 +22,11 @@ public class NaturalGasEngineBlock extends DirectionalKineticBlock implements IB
 
     public NaturalGasEngineBlock(Properties properties) {
         super(properties);
+        registerCapacity(defaultBlockState());
+    }
+
+    private void registerCapacity(BlockState state) {
+        BlockStressValues.CAPACITIES.register(state.getBlock(), () -> {return 2048;});
     }
 
     @Override
@@ -68,7 +73,7 @@ public class NaturalGasEngineBlock extends DirectionalKineticBlock implements IB
 
     @Override
     public BlockEntityType<? extends NaturalGasEngineBlockEntity> getBlockEntityType() {
-        return BlockEntities.NATURAL_GAS_ENGINE.get();
+        return CGCBlockEntities.NATURAL_GAS_ENGINE.get();
     }
 
 }

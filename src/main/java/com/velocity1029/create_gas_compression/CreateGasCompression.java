@@ -8,16 +8,16 @@ import com.simibubi.create.foundation.item.TooltipModifier;
 //import com.velocity1029.create_gas_compression.painting.ModPaintings;
 //import com.velocity1029.create_gas_compression.worldgen.biome.ModBiomes;
 //import com.velocity1029.create_gas_compression.worldgen.dimension.ModDimensions;
-import com.velocity1029.create_gas_compression.registry.BlockEntities;
-import com.velocity1029.create_gas_compression.registry.Blocks;
+import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
+import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -38,6 +38,7 @@ public class CreateGasCompression
 //     * <b>Other mods should not use this field!</b> If you are an addon developer, create your own instance of
 //     * {@link CreateRegistrate}.
 //     */
+
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID);
 //            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
 
@@ -51,6 +52,7 @@ public class CreateGasCompression
     public CreateGasCompression(FMLJavaModLoadingContext context)
     {
         IEventBus modEventBus = context.getModEventBus();
+        IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
 
         REGISTRATE.registerEventListeners(modEventBus);
 
@@ -61,8 +63,8 @@ public class CreateGasCompression
         MinecraftForge.EVENT_BUS.register(this);
 
 
-        Blocks.register();
-        BlockEntities.register();
+        CGCBlocks.register();
+        CGCBlockEntities.register();
 //        ModPaintings.register(bus);
 //
 //        ModBiomes.register(bus);
@@ -70,6 +72,8 @@ public class CreateGasCompression
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CreateGasCompressionClient.onCtorClient(modEventBus, forgeEventBus));
     }
 
 //    public static final CreativeModeTab.Builder BUILDER = new CreativeModeTab.Builder()
@@ -83,7 +87,7 @@ public class CreateGasCompression
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
-
+        //Mods.JEI.executeIfInstalled(() -> CGCRecipes::register);
         // Some common setup code
 //        LOGGER.info("HELLO FROM COMMON SETUP");
 //        if (Config.logDirtBlock)
@@ -111,5 +115,9 @@ public class CreateGasCompression
             LOGGER.info("HELLO FROM CLIENT SETUP");
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         }
+    }
+
+    public static ResourceLocation asResource(String path) {
+        return ResourceLocation.parse(MODID+path);
     }
 }

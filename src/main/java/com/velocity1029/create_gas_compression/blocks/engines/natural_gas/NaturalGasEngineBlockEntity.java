@@ -11,6 +11,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
 
+import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.math.VecHelper;
 import net.createmod.catnip.math.AngleHelper;
@@ -26,6 +27,7 @@ public class NaturalGasEngineBlockEntity extends GeneratingKineticBlockEntity {
 
     public static final int DEFAULT_SPEED = 16;
     public static final int MAX_SPEED = 256;
+
 
     protected ScrollValueBehaviour generatedSpeed;
 
@@ -54,7 +56,7 @@ public class NaturalGasEngineBlockEntity extends GeneratingKineticBlockEntity {
 
     @Override
     public float getGeneratedSpeed() {
-        if (!AllBlocks.CREATIVE_MOTOR.has(getBlockState()))
+        if (!CGCBlocks.NATURAL_GAS_ENGINE.has(getBlockState()))
             return 0;
         return convertToDirection(generatedSpeed.getValue(), getBlockState().getValue(NaturalGasEngineBlock.FACING));
     }

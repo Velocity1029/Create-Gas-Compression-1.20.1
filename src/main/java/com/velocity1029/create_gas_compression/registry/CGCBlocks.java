@@ -7,14 +7,13 @@ import static com.velocity1029.create_gas_compression.CreateGasCompression.REGIS
 import com.simibubi.create.AllTags;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.foundation.data.SharedProperties;
-import com.simibubi.create.infrastructure.config.CStress;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.engines.natural_gas.NaturalGasEngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.natural_gas.NaturalGasEngineGenerator;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.material.MapColor;
 
-public class Blocks {
+public class CGCBlocks {
 
 //    static {
 //        Registrate.setCreativeTab(CreativeModeTabs.BASE_CREATIVE_TAB);
@@ -28,8 +27,7 @@ public class Blocks {
                     .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
                     .transform(pickaxeOnly())
                     .blockstate(new NaturalGasEngineGenerator()::generate)
-//                    .transform(CStress.setCapacity(16384.0))
-                    .onRegister(BlockStressValues.setGeneratorSpeed(256, true))
+                    .onRegister( BlockStressValues.setGeneratorSpeed(256, true))
                     .item()
                     .properties(p -> p.rarity(Rarity.EPIC))
                     .transform(customItemModel())

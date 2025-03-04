@@ -2,10 +2,10 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "5": "create:block/creative_casing",
-    "6": "create:block/creative_motor",
+    "5": "create_gas_compression:block/natural_gas_casing",
+    "6": "create_gas_compression:block/natural_gas_engine",
     "7": "create:block/flap_display_front",
-    "particle": "create:block/creative_casing",
+    "particle": "create_gas_compression:block/natural_gas_casing",
     "1_0": "create:block/axis"
   },
   "elements": [
