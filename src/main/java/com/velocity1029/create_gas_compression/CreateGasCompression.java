@@ -8,11 +8,13 @@ import com.simibubi.create.foundation.item.TooltipModifier;
 //import com.velocity1029.create_gas_compression.painting.ModPaintings;
 //import com.velocity1029.create_gas_compression.worldgen.biome.ModBiomes;
 //import com.velocity1029.create_gas_compression.worldgen.dimension.ModDimensions;
-import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
-import com.velocity1029.create_gas_compression.registry.CGCBlocks;
+import com.velocity1029.create_gas_compression.compat.Mods;
+import com.velocity1029.create_gas_compression.registry.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -39,8 +41,8 @@ public class CreateGasCompression
 //     * {@link CreateRegistrate}.
 //     */
 
-    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID);
-//            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
+    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID)
+            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
 
     static {
         REGISTRATE.setTooltipModifierFactory(item ->
@@ -63,8 +65,10 @@ public class CreateGasCompression
         MinecraftForge.EVENT_BUS.register(this);
 
 
+        CGCTags.init();
         CGCBlocks.register();
         CGCBlockEntities.register();
+        CGCFluids.register();
 //        ModPaintings.register(bus);
 //
 //        ModBiomes.register(bus);
@@ -87,7 +91,10 @@ public class CreateGasCompression
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
-        //Mods.JEI.executeIfInstalled(() -> CGCRecipes::register);
+        event.enqueueWork(() -> {
+            Mods.JEI.executeIfInstalled(() -> CGCRecipes::register);
+//            ForgeChunkManager.setForcedChunkLoadingCallback(MODID, ChunkLoadManager::validateAllForcedChunks);
+        });
         // Some common setup code
 //        LOGGER.info("HELLO FROM COMMON SETUP");
 //        if (Config.logDirtBlock)

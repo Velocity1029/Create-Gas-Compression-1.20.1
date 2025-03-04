@@ -1,3 +1,9 @@
 {
-  "block.create_gas_compression.natural_gas_engine": "ǝuıbuƎ sɐ⅁ ןɐɹnʇɐN"
+  "block.create_gas_compression.natural_gas_engine": "ǝuıbuƎ sɐ⅁ ןɐɹnʇɐN",
+  "fluid.create_gas_compression.air": "ɹıⱯ",
+  "fluid.create_gas_compression.carbon_dioxide": "ǝpıxoıᗡ uoqɹɐƆ",
+  "fluid.create_gas_compression.natural_gas": "sɐ⅁ ןɐɹnʇɐN",
+  "item.create_gas_compression.air_bucket": "ʞuɐ⟘ ɹıⱯ",
+  "item.create_gas_compression.carbon_dioxide_bucket": "ʞuɐ⟘ ǝpıxoıᗡ uoqɹɐƆ",
+  "item.create_gas_compression.natural_gas_bucket": "ʞuɐ⟘ sɐ⅁ ןɐɹnʇɐN"
 }

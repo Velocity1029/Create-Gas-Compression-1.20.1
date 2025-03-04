@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create_gas_compression:item/natural_gas_bucket"
+  }
+}

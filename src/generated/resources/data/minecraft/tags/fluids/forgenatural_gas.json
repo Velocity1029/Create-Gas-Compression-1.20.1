@@ -1,0 +1,6 @@
+{
+  "values": [
+    "create_gas_compression:flowing_natural_gas",
+    "create_gas_compression:natural_gas"
+  ]
+}

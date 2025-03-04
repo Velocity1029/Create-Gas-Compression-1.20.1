@@ -1,3 +1,9 @@
 {
-  "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine"
+  "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine",
+  "fluid.create_gas_compression.air": "Air",
+  "fluid.create_gas_compression.carbon_dioxide": "Carbon Dioxide",
+  "fluid.create_gas_compression.natural_gas": "Natural Gas",
+  "item.create_gas_compression.air_bucket": "Air Tank",
+  "item.create_gas_compression.carbon_dioxide_bucket": "Carbon Dioxide Tank",
+  "item.create_gas_compression.natural_gas_bucket": "Natural Gas Tank"
 }
