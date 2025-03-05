@@ -4,7 +4,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 
 public interface IEngineVariant {
-    TagKey<Fluid> getFluidTag();
+    TagKey<Fluid> getFuelTag();
+    Fluid getExhaust();
     double getEnergyDensity();
     long getMaxCapacity();
     float getSpeed();

@@ -1,14 +1,19 @@
 package com.velocity1029.create_gas_compression.blocks.engines.variants;
 
 import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
+import com.velocity1029.create_gas_compression.registry.CGCFluids;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 
 public class NaturalGasVariant implements IEngineVariant {
     @Override
-    public TagKey<Fluid> getFluidTag() {
+    public TagKey<Fluid> getFuelTag() {
         return CGCTags.CGCFluidTags.NATURAL_GAS.tag;
+    }
+    @Override
+    public Fluid getExhaust() {
+        return CGCFluids.CARBON_DIOXIDE.getSource();
     }
 
     @Override

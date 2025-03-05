@@ -98,7 +98,7 @@ public class CommonConfig {
 
         naturalGasEnergyDensity = builder
                 .comment("Energy contained in each milliBucket of natural gas.")
-                .defineInRange("naturalGasEnergyDensity", 1.0, 0.0, Double.MAX_VALUE);
+                .defineInRange("naturalGasEnergyDensity", 35.0, 0.0, Double.MAX_VALUE);
 
         builder.push("Motors");
 

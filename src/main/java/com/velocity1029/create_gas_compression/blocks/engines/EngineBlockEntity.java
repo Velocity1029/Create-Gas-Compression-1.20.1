@@ -50,13 +50,13 @@ import javax.annotation.Nonnull;
 public class EngineBlockEntity extends GeneratingKineticBlockEntity {
     public boolean needsPower = false;
     private final IEngineVariant variant;
-    public static final int DEFAULT_SPEED = 16;
+    public static final int DEFAULT_SPEED = 64;
     public static final int MAX_SPEED = 256;
     public boolean powered = false;
     private float actualSpeed = 0;
     private float actualStress = 0;
     private long prvFluid = -100000;
-    private int fluidSpam = 0;
+    private int consumptionTimer = 0;
 
 
 
@@ -74,9 +74,9 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
     public EngineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, IEngineVariant variant) {
         super(type, pos, state);
         this.variant = variant;
-        this.fuelTank = createInventory(CGCTags.CGCFluidTags.NATURAL_GAS.tag, false);
-        this.exhaustTank = createInventory((Fluid)CGCFluids.CARBON_DIOXIDE.getSource(), true);
-        this.airTank = createInventory((Fluid)CGCFluids.AIR.getSource(), false);
+        this.fuelTank = createInventory(variant.getFuelTag(), false);
+        this.exhaustTank = createInventory(variant.getExhaust(), true);
+        this.airTank = createInventory(CGCFluids.AIR.getSource(), false);
         this.tanks = Couple.create(this.fuelTank, this.exhaustTank);
         this.fluidCapability = LazyOptional.of(() -> new CombinedTankWrapper(fuelTank, airTank, exhaustTank));
     }
@@ -103,15 +103,15 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
     public void initialize() {
         powered = getLevel().hasNeighborSignal(this.getBlockPos());
         super.initialize();
-        if (!hasSource() || getGeneratedSpeed() > getTheoreticalSpeed())
-            updateGeneratedRotation();
+//        if (!hasSource() || getGeneratedSpeed() > getTheoreticalSpeed())
+//            updateGeneratedRotation();
     }
 
     @Override
     public float getGeneratedSpeed() {
         if (!CGCBlocks.NATURAL_GAS_ENGINE.has(getBlockState()))
             return 0;
-        return convertToDirection(generatedSpeed.getValue(), getBlockState().getValue(EngineBlock.FACING));
+        return convertToDirection(actualSpeed, getBlockState().getValue(EngineBlock.FACING));
     }
 
     static class MotorValueBox extends ValueBoxTransform.Sided {
@@ -242,33 +242,60 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
 //        speedBehavior.betweenValidated((int) -variant.getSpeed(), (int) variant.getSpeed());
 
         if (!level.isClientSide()) {
-            int needed = (int) Math.ceil((variant.getStress() * stressMultiplier
-                    * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
-                    * CreateGasCompressionConfig.getCommon().suToMJ.get()
-                    * variant.getEnergyDensity());
-//            p = needsPower == powered ? energy.internalExtract(needed, false) : 0;
-            int presentFluid = tanks.get(true).getFluidAmount();
-            if (presentFluid > needed) {
-                actualSpeed = generatedSpeed.value;
-                actualStress =
-                        (float) Math.ceil((variant.getStress() * stressMultiplier
-                                * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
-                                * (presentFluid / (float)needed));
-            } else {
-                actualSpeed = 0;
-                actualStress = 0;
-            }
-            if (((actualSpeed != speed) || (actualStress != stress))) {
-                updateGeneratedRotation();
-                speed = actualSpeed;
-                stress = actualStress;
-            } else if (presentFluid != prvFluid && fluidSpam > 10) {
-                this.sendData();
-                prvFluid = tanks.get(true).getFluidAmount();
-                fluidSpam = 0;
+            // Every five ticks we will run/update the engine
+            if (consumptionTimer > 5) {
+                // Amount of fuel needed in mB
+                int needed = (int) Math.ceil((variant.getStress() * stressMultiplier
+                        * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
+                        * CreateGasCompressionConfig.getCommon().suToMJ.get()
+                        * variant.getEnergyDensity()
+                        * actualSpeed / DEFAULT_SPEED);
+
+                // Fuel in tank
+                int presentFuel = fuelTank.getFluidAmount();
+                // Remaining space in exhaust tank
+                int exhaustSpace = exhaustTank.getSpace();
+                // If the block is active, we have enough fuel, and space for exhaust
+                if (needsPower == powered && presentFuel > 0 && exhaustSpace > 0) {
+                    // Run that baby!
+                    actualSpeed = generatedSpeed.value;
+                    actualStress =
+                            (float) Math.ceil((variant.getStress() * stressMultiplier
+                                    * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
+                                    * (presentFuel / (float) needed));
+                    // Consume fuel
+                    fuelTank.getFluid().shrink(needed);
+                    // Produce exhaust
+                    if (!exhaustTank.isEmpty()) {
+                        exhaustTank.getFluid().setAmount(Math.min(exhaustTank.getFluidAmount() + (needed / 10), exhaustTank.getCapacity()));
+                    } else {
+                        exhaustTank.setFluid(new FluidStack(variant.getExhaust(), needed / 10));
+                    }
+                // Otherwise
+                } else {
+                    // Stop the engine :(
+                    actualSpeed = 0;
+                    actualStress = 0;
+                }
+                // Then if the speed or stress capacity of the engine has changed...
+                if (((actualSpeed != speed) || (actualStress != stress))) {
+                    // Signal the KineticBlockEntity class to get our speed and inform networks
+                    updateGeneratedRotation();
+                    // Set our speed and stress to the new values
+                    speed = actualSpeed;
+                    stress = actualStress;
+                // Otherwise if fuel has been consumed
+                } else if (presentFuel != prvFluid && consumptionTimer > 5) {
+                    // Send said information
+                    this.sendData();
+                    // And record the fuel amount
+                    prvFluid = fuelTank.getFluidAmount();
+                }
+                // Then wait another 5 ticks
+                consumptionTimer = 0;
             }
         }
-        fluidSpam++;
+        consumptionTimer++;
     }
 
 
