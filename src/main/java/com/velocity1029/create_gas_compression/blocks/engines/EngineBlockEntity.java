@@ -245,18 +245,18 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
             // Every five ticks we will run/update the engine
             if (consumptionTimer > 5) {
                 // Amount of fuel needed in mB
-                int needed = (int) Math.ceil((variant.getStress() * stressMultiplier
+                int needed = Math.max((int) Math.ceil((variant.getStress() * stressMultiplier
                         * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
                         * CreateGasCompressionConfig.getCommon().suToMJ.get()
                         * variant.getEnergyDensity()
-                        * actualSpeed / DEFAULT_SPEED);
+                        * actualSpeed / DEFAULT_SPEED), 1);
 
                 // Fuel in tank
                 int presentFuel = fuelTank.getFluidAmount();
                 // Remaining space in exhaust tank
                 int exhaustSpace = exhaustTank.getSpace();
                 // If the block is active, we have enough fuel, and space for exhaust
-                if (needsPower == powered && presentFuel > 0 && exhaustSpace > 0) {
+                if (needsPower == powered && presentFuel >= needed && exhaustSpace > 0) {
                     // Run that baby!
                     actualSpeed = generatedSpeed.value;
                     actualStress =
@@ -264,7 +264,8 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
                                     * CreateGasCompressionConfig.getCommon().engineSUMultiplier.get())
                                     * (presentFuel / (float) needed));
                     // Consume fuel
-                    fuelTank.getFluid().shrink(needed);
+                    if (!fuelTank.isEmpty())
+                        fuelTank.getFluid().shrink(needed);
                     // Produce exhaust
                     if (!exhaustTank.isEmpty()) {
                         exhaustTank.getFluid().setAmount(Math.min(exhaustTank.getFluidAmount() + (needed / 10), exhaustTank.getCapacity()));
@@ -279,11 +280,8 @@ public class EngineBlockEntity extends GeneratingKineticBlockEntity {
                 }
                 // Then if the speed or stress capacity of the engine has changed...
                 if (((actualSpeed != speed) || (actualStress != stress))) {
-                    // Signal the KineticBlockEntity class to get our speed and inform networks
+                    // Signal the KineticBlockEntity class to get our speed, inform networks, and set our speed and stress capacity if we are a source
                     updateGeneratedRotation();
-                    // Set our speed and stress to the new values
-                    speed = actualSpeed;
-                    stress = actualStress;
                 // Otherwise if fuel has been consumed
                 } else if (presentFuel != prvFluid && consumptionTimer > 5) {
                     // Send said information
