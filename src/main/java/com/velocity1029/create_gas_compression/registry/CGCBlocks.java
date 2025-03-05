@@ -8,9 +8,8 @@ import com.simibubi.create.AllTags;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.tterrag.registrate.util.entry.BlockEntry;
-import com.velocity1029.create_gas_compression.blocks.engines.natural_gas.NaturalGasEngineBlock;
-import com.velocity1029.create_gas_compression.blocks.engines.natural_gas.NaturalGasEngineGenerator;
-import net.minecraft.world.item.Rarity;
+import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
+import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
 import net.minecraft.world.level.material.MapColor;
 
 public class CGCBlocks {
@@ -19,14 +18,14 @@ public class CGCBlocks {
 //        Registrate.setCreativeTab(CreativeModeTabs.BASE_CREATIVE_TAB);
 //    }
 
-    public static final BlockEntry<NaturalGasEngineBlock> NATURAL_GAS_ENGINE =
-            REGISTRATE.block("natural_gas_engine", NaturalGasEngineBlock::new)
+    public static final BlockEntry<EngineBlock> NATURAL_GAS_ENGINE =
+            REGISTRATE.block("natural_gas_engine", EngineBlock::new)
                     .initialProperties(SharedProperties::stone)
                     .properties(p -> p.mapColor(MapColor.COLOR_GREEN)
                             .forceSolidOn())
                     .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
                     .transform(pickaxeOnly())
-                    .blockstate(new NaturalGasEngineGenerator()::generate)
+                    .blockstate(new EngineGenerator()::generate)
                     .onRegister( BlockStressValues.setGeneratorSpeed(256, true))
                     .item()
                     .transform(customItemModel())

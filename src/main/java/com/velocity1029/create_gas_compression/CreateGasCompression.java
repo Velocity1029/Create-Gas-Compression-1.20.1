@@ -9,6 +9,7 @@ import com.simibubi.create.foundation.item.TooltipModifier;
 //import com.velocity1029.create_gas_compression.worldgen.biome.ModBiomes;
 //import com.velocity1029.create_gas_compression.worldgen.dimension.ModDimensions;
 import com.velocity1029.create_gas_compression.compat.Mods;
+import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
 import com.velocity1029.create_gas_compression.registry.*;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.client.Minecraft;
@@ -42,7 +43,7 @@ public class CreateGasCompression
 //     */
 
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID)
-            .defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
+            .defaultCreativeTab((ResourceKey<CreativeModeTab>) CGCCreativeModeTabs.MAIN.getKey());
 
     static {
         REGISTRATE.setTooltipModifierFactory(item ->
@@ -64,6 +65,11 @@ public class CreateGasCompression
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
+
+        // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
+        context.registerConfig(ModConfig.Type.COMMON, CreateGasCompressionConfig.getCommonSpec());
+        context.registerConfig(ModConfig.Type.CLIENT, CreateGasCompressionConfig.getClientSpec());
+
         REGISTRATE.setCreativeTab(CGCCreativeModeTabs.MAIN);
 
         CGCTags.init();
@@ -75,9 +81,6 @@ public class CreateGasCompression
 //
 //        ModBiomes.register(bus);
 //        ModDimensions.register();
-
-        // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CreateGasCompressionClient.onCtorClient(modEventBus, forgeEventBus));
     }

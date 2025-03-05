@@ -1,4 +1,4 @@
-package com.velocity1029.create_gas_compression.blocks.engines.natural_gas;
+package com.velocity1029.create_gas_compression.blocks.engines;
 
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.api.stress.BlockStressValues;
@@ -18,9 +18,9 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class NaturalGasEngineBlock extends DirectionalKineticBlock implements IBE<NaturalGasEngineBlockEntity> {
+public class EngineBlock extends DirectionalKineticBlock implements IBE<EngineBlockEntity> {
 
-    public NaturalGasEngineBlock(Properties properties) {
+    public EngineBlock(Properties properties) {
         super(properties);
         registerCapacity(defaultBlockState());
     }
@@ -67,12 +67,12 @@ public class NaturalGasEngineBlock extends DirectionalKineticBlock implements IB
     }
 
     @Override
-    public Class<NaturalGasEngineBlockEntity> getBlockEntityClass() {
-        return NaturalGasEngineBlockEntity.class;
+    public Class<EngineBlockEntity> getBlockEntityClass() {
+        return EngineBlockEntity.class;
     }
 
     @Override
-    public BlockEntityType<? extends NaturalGasEngineBlockEntity> getBlockEntityType() {
+    public BlockEntityType<? extends EngineBlockEntity> getBlockEntityType() {
         return CGCBlockEntities.NATURAL_GAS_ENGINE.get();
     }
 
