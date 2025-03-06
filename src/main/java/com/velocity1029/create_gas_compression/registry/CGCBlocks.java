@@ -6,10 +6,15 @@ import static com.velocity1029.create_gas_compression.CreateGasCompression.REGIS
 
 import com.simibubi.create.AllTags;
 import com.simibubi.create.api.stress.BlockStressValues;
+import com.simibubi.create.foundation.data.BlockStateGen;
+import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
+import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
+import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeAttachmentModel;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
 public class CGCBlocks {
@@ -27,6 +32,17 @@ public class CGCBlocks {
                     .transform(pickaxeOnly())
                     .blockstate(new EngineGenerator()::generate)
                     .onRegister( BlockStressValues.setGeneratorSpeed(256, true))
+                    .item()
+                    .transform(customItemModel())
+                    .register();
+
+    public static final BlockEntry<IronPipeBlock> IRON_PIPE =
+            REGISTRATE.block("iron_pipe", IronPipeBlock::new)
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
+                    .transform(pickaxeOnly())
+                    .blockstate(BlockStateGen.pipe())
+                    .onRegister( CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
                     .item()
                     .transform(customItemModel())
                     .register();

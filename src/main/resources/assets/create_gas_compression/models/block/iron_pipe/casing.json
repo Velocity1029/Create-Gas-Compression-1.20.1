@@ -2,7 +2,7 @@
 	"credit": "Made with Blockbench",
 	"textures": {
 		"0": "create_gas_compression:block/pipes",
-		"particle": "create_gas_compression:block/pipes"
+		"particle": "block/iron"
 	},
 	"elements": [
 		{

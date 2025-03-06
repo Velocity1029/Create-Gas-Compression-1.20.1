@@ -73,6 +73,7 @@ public class CreateGasCompression
         REGISTRATE.setCreativeTab(CGCCreativeModeTabs.MAIN);
 
         CGCTags.init();
+        CGCPartialModels.register();
         CGCBlocks.register();
         CGCBlockEntities.register();
         CGCFluids.register();
