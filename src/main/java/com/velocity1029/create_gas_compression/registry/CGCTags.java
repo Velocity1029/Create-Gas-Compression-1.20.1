@@ -5,6 +5,7 @@ import net.createmod.catnip.lang.Lang;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -63,6 +64,41 @@ public class CGCTags {
             this.id = id;
             this.optionalDefault = optionalDefault;
             this.alwaysDatagenDefault = alwaysDatagenDefault;
+        }
+    }
+
+    // BLOCKS
+    public enum CGCBlockTags {
+        PRESSURIZED(NameSpace.FORGE);
+
+
+        public final TagKey<Block> tag;
+        public final boolean alwaysDatagen;
+
+        CGCBlockTags() {
+            this(NameSpace.MOD);
+        }
+
+        CGCBlockTags(NameSpace namespace) {
+            this(namespace, namespace.optionalDefault, namespace.alwaysDatagenDefault);
+        }
+
+        CGCBlockTags(NameSpace namespace, String path) {
+            this(namespace, path, namespace.optionalDefault, namespace.alwaysDatagenDefault);
+        }
+
+        CGCBlockTags(NameSpace namespace, boolean optional, boolean alwaysDatagen) {
+            this(namespace, null, optional, alwaysDatagen);
+        }
+
+        CGCBlockTags(NameSpace namespace, String path, boolean optional, boolean alwaysDatagen) {
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace.id, (path == null ? Lang.asId(name()) : path));
+            if (optional) {
+                tag = optionalTag(ForgeRegistries.BLOCKS, id);
+            } else {
+                tag = BlockTags.create(id);
+            }
+            this.alwaysDatagen = alwaysDatagen;
         }
     }
 
@@ -135,7 +171,7 @@ public class CGCTags {
 
 
     public static void init() {
-//        TFMGBlockTags.init();
+        CGCFluidTags.init();
 //        TFMGItemTags.init();
         CGCFluidTags.init();
 //        TFMGEntityTags.init();

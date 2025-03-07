@@ -59,130 +59,129 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Optional;
 
-public class IronPipeBlock extends PipeBlock implements SimpleWaterloggedBlock, IWrenchableWithBracket,
-        IBE<IronPipeBlockEntity>, EncasableBlock, TransformableBlock {
-    private static final VoxelShape OCCLUSION_BOX = Block.box(4, 4, 4, 12, 12, 12);
+public class IronPipeBlock extends FluidPipeBlock {
+//    private static final VoxelShape OCCLUSION_BOX = Block.box(4, 4, 4, 12, 12, 12);
 
     public IronPipeBlock(Properties properties) {
-        super(4 / 16f, properties);
+        super(properties);
         this.registerDefaultState(super.defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, false));
     }
 
-    @Override
-    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        if (tryRemoveBracket(context))
-            return InteractionResult.SUCCESS;
-
-        Level world = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        Direction clickedFace = context.getClickedFace();
-
-        Axis axis = getAxis(world, pos, state);
-        if (axis == null) {
-            Vec3 clickLocation = context.getClickLocation()
-                    .subtract(pos.getX(), pos.getY(), pos.getZ());
-            double closest = Float.MAX_VALUE;
-            Direction argClosest = Direction.UP;
-            for (Direction direction : Iterate.directions) {
-                if (clickedFace.getAxis() == direction.getAxis())
-                    continue;
-                Vec3 centerOf = Vec3.atCenterOf(direction.getNormal());
-                double distance = centerOf.distanceToSqr(clickLocation);
-                if (distance < closest) {
-                    closest = distance;
-                    argClosest = direction;
-                }
-            }
-            axis = argClosest.getAxis();
-        }
-
-        if (clickedFace.getAxis() == axis)
-            return InteractionResult.PASS;
-        if (!world.isClientSide) {
-//            withBlockEntityDo(world, pos, fpte -> fpte.getBehaviour(FluidTransportBehaviour.TYPE).interfaces.values()
-//                    .stream()
-//                    .filter(pc -> pc != null && pc.hasFlow())
-//                    .findAny()
-//                    .ifPresent($ -> AllAdvancements.GLASS_PIPE.awardTo(context.getPlayer())));
+//    @Override
+//    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+//        if (tryRemoveBracket(context))
+//            return InteractionResult.SUCCESS;
 //
-//            FluidTransportBehaviour.cacheFlows(world, pos);
-//            world.setBlockAndUpdate(pos, AllBlocks.GLASS_FLUID_PIPE.getDefaultState()
-//                    .setValue(GlassFluidPipeBlock.AXIS, axis)
-//                    .setValue(BlockStateProperties.WATERLOGGED, state.getValue(BlockStateProperties.WATERLOGGED)));
-//            FluidTransportBehaviour.loadFlows(world, pos);
-        }
-        return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, LivingEntity pPlacer, ItemStack pStack) {
-        super.setPlacedBy(pLevel, pPos, pState, pPlacer, pStack);
-        AdvancementBehaviour.setPlacedBy(pLevel, pPos, pPlacer);
-    }
-
-    @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand,
-                                 BlockHitResult ray) {
-        ItemStack heldItem = player.getItemInHand(hand);
-        InteractionResult result = tryEncase(state, world, pos, heldItem, player, hand, ray);
-        if (result.consumesAction())
-            return result;
-
-        return InteractionResult.PASS;
-    }
-
-    public BlockState getAxisState(Axis axis) {
-        BlockState defaultState = defaultBlockState();
-        for (Direction d : Iterate.directions)
-            defaultState = defaultState.setValue(PROPERTY_BY_DIRECTION.get(d), d.getAxis() == axis);
-        return defaultState;
-    }
-
-    @Nullable
-    private Axis getAxis(BlockGetter world, BlockPos pos, BlockState state) {
-        return FluidPropagator.getStraightPipeAxis(state);
-    }
-
-    @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
-        boolean blockTypeChanged = state.getBlock() != newState.getBlock();
-        if (blockTypeChanged && !world.isClientSide)
-            FluidPropagator.propagateChangedPipe(world, pos, state);
-        if (state != newState && !isMoving)
-            removeBracket(world, pos, true).ifPresent(stack -> Block.popResource(world, pos, stack));
-        if (state.hasBlockEntity() && (blockTypeChanged || !newState.hasBlockEntity()))
-            world.removeBlockEntity(pos);
-    }
-
-    @Override
-    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (world.isClientSide)
-            return;
-        if (state != oldState)
-            world.scheduleTick(pos, this, 1, TickPriority.HIGH);
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block otherBlock, BlockPos neighborPos,
-                                boolean isMoving) {
-        DebugPackets.sendNeighborsUpdatePacket(world, pos);
-        Direction d = FluidPropagator.validateNeighbourChange(state, world, pos, otherBlock, neighborPos, isMoving);
-        if (d == null)
-            return;
-        if (!isOpenAt(state, d))
-            return;
-        world.scheduleTick(pos, this, 1, TickPriority.HIGH);
-    }
-
-    @Override
-    public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource r) {
-        FluidPropagator.propagateChangedPipe(world, pos, state);
-    }
-
-    public static boolean isPipe(BlockState state) {
-        return state.getBlock() instanceof FluidPipeBlock;
-    }
-
+//        Level world = context.getLevel();
+//        BlockPos pos = context.getClickedPos();
+//        Direction clickedFace = context.getClickedFace();
+//
+//        Axis axis = getAxis(world, pos, state);
+//        if (axis == null) {
+//            Vec3 clickLocation = context.getClickLocation()
+//                    .subtract(pos.getX(), pos.getY(), pos.getZ());
+//            double closest = Float.MAX_VALUE;
+//            Direction argClosest = Direction.UP;
+//            for (Direction direction : Iterate.directions) {
+//                if (clickedFace.getAxis() == direction.getAxis())
+//                    continue;
+//                Vec3 centerOf = Vec3.atCenterOf(direction.getNormal());
+//                double distance = centerOf.distanceToSqr(clickLocation);
+//                if (distance < closest) {
+//                    closest = distance;
+//                    argClosest = direction;
+//                }
+//            }
+//            axis = argClosest.getAxis();
+//        }
+//
+//        if (clickedFace.getAxis() == axis)
+//            return InteractionResult.PASS;
+//        if (!world.isClientSide) {
+////            withBlockEntityDo(world, pos, fpte -> fpte.getBehaviour(FluidTransportBehaviour.TYPE).interfaces.values()
+////                    .stream()
+////                    .filter(pc -> pc != null && pc.hasFlow())
+////                    .findAny()
+////                    .ifPresent($ -> AllAdvancements.GLASS_PIPE.awardTo(context.getPlayer())));
+////
+////            FluidTransportBehaviour.cacheFlows(world, pos);
+////            world.setBlockAndUpdate(pos, AllBlocks.GLASS_FLUID_PIPE.getDefaultState()
+////                    .setValue(GlassFluidPipeBlock.AXIS, axis)
+////                    .setValue(BlockStateProperties.WATERLOGGED, state.getValue(BlockStateProperties.WATERLOGGED)));
+////            FluidTransportBehaviour.loadFlows(world, pos);
+//        }
+//        return InteractionResult.SUCCESS;
+//    }
+//
+//    @Override
+//    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, LivingEntity pPlacer, ItemStack pStack) {
+//        super.setPlacedBy(pLevel, pPos, pState, pPlacer, pStack);
+//        AdvancementBehaviour.setPlacedBy(pLevel, pPos, pPlacer);
+//    }
+//
+//    @Override
+//    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand,
+//                                 BlockHitResult ray) {
+//        ItemStack heldItem = player.getItemInHand(hand);
+//        InteractionResult result = tryEncase(state, world, pos, heldItem, player, hand, ray);
+//        if (result.consumesAction())
+//            return result;
+//
+//        return InteractionResult.PASS;
+//    }
+//
+//    public BlockState getAxisState(Axis axis) {
+//        BlockState defaultState = defaultBlockState();
+//        for (Direction d : Iterate.directions)
+//            defaultState = defaultState.setValue(PROPERTY_BY_DIRECTION.get(d), d.getAxis() == axis);
+//        return defaultState;
+//    }
+//
+//    @Nullable
+//    private Axis getAxis(BlockGetter world, BlockPos pos, BlockState state) {
+//        return FluidPropagator.getStraightPipeAxis(state);
+//    }
+//
+//    @Override
+//    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
+//        boolean blockTypeChanged = state.getBlock() != newState.getBlock();
+//        if (blockTypeChanged && !world.isClientSide)
+//            FluidPropagator.propagateChangedPipe(world, pos, state);
+//        if (state != newState && !isMoving)
+//            removeBracket(world, pos, true).ifPresent(stack -> Block.popResource(world, pos, stack));
+//        if (state.hasBlockEntity() && (blockTypeChanged || !newState.hasBlockEntity()))
+//            world.removeBlockEntity(pos);
+//    }
+//
+//    @Override
+//    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
+//        if (world.isClientSide)
+//            return;
+//        if (state != oldState)
+//            world.scheduleTick(pos, this, 1, TickPriority.HIGH);
+//    }
+//
+//    @Override
+//    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block otherBlock, BlockPos neighborPos,
+//                                boolean isMoving) {
+//        DebugPackets.sendNeighborsUpdatePacket(world, pos);
+//        Direction d = FluidPropagator.validateNeighbourChange(state, world, pos, otherBlock, neighborPos, isMoving);
+//        if (d == null)
+//            return;
+//        if (!isOpenAt(state, d))
+//            return;
+//        world.scheduleTick(pos, this, 1, TickPriority.HIGH);
+//    }
+//
+//    @Override
+//    public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource r) {
+//        FluidPropagator.propagateChangedPipe(world, pos, state);
+//    }
+//
+//    public static boolean isPipe(BlockState state) {
+//        return state.getBlock() instanceof IronPipeBlock;
+//    }
+//
     public static boolean canConnectTo(BlockAndTintGetter world, BlockPos neighbourPos, BlockState neighbour,
                                        Direction direction) {
         // TODO strictify fluid provisions
@@ -200,7 +199,7 @@ public class IronPipeBlock extends PipeBlock implements SimpleWaterloggedBlock, 
             return false;
         return transport.canHaveFlowToward(neighbour, direction.getOpposite());
     }
-
+//
     public static boolean shouldDrawRim(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction direction) {
         BlockPos offsetPos = pos.relative(direction);
         BlockState facingState = world.getBlockState(offsetPos);
@@ -213,11 +212,11 @@ public class IronPipeBlock extends PipeBlock implements SimpleWaterloggedBlock, 
             return true;
         return false;
     }
-
-    public static boolean isOpenAt(BlockState state, Direction direction) {
-        return state.getValue(PROPERTY_BY_DIRECTION.get(direction));
-    }
-
+//
+//    public static boolean isOpenAt(BlockState state, Direction direction) {
+//        return state.getValue(PROPERTY_BY_DIRECTION.get(direction));
+//    }
+//
     public static boolean isCornerOrEndPipe(BlockAndTintGetter world, BlockPos pos, BlockState state) {
         return isPipe(state) && FluidPropagator.getStraightPipeAxis(state) == null
                 && !shouldDrawCasing(world, pos, state);
@@ -236,22 +235,22 @@ public class IronPipeBlock extends PipeBlock implements SimpleWaterloggedBlock, 
         }
         return false;
     }
-
-    @Override
-    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
-        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN, BlockStateProperties.WATERLOGGED);
-        super.createBlockStateDefinition(builder);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        FluidState FluidState = context.getLevel()
-                .getFluidState(context.getClickedPos());
-        return updateBlockState(defaultBlockState(), context.getNearestLookingDirection(), null, context.getLevel(),
-                context.getClickedPos()).setValue(BlockStateProperties.WATERLOGGED,
-                Boolean.valueOf(FluidState.getType() == Fluids.WATER));
-    }
-
+//
+//    @Override
+//    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+//        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN, BlockStateProperties.WATERLOGGED);
+//        super.createBlockStateDefinition(builder);
+//    }
+//
+//    @Override
+//    public BlockState getStateForPlacement(BlockPlaceContext context) {
+//        FluidState FluidState = context.getLevel()
+//                .getFluidState(context.getClickedPos());
+//        return updateBlockState(defaultBlockState(), context.getNearestLookingDirection(), null, context.getLevel(),
+//                context.getClickedPos()).setValue(BlockStateProperties.WATERLOGGED,
+//                Boolean.valueOf(FluidState.getType() == Fluids.WATER));
+//    }
+//
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighbourState, LevelAccessor world,
                                   BlockPos pos, BlockPos neighbourPos) {
@@ -304,64 +303,65 @@ public class IronPipeBlock extends PipeBlock implements SimpleWaterloggedBlock, 
         return state.setValue(PROPERTY_BY_DIRECTION.get(preferredDirection), true)
                 .setValue(PROPERTY_BY_DIRECTION.get(preferredDirection.getOpposite()), true);
     }
-
-    @Override
-    public FluidState getFluidState(BlockState state) {
-        return state.getValue(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getSource(false)
-                : Fluids.EMPTY.defaultFluidState();
-    }
-
-    @Override
-    public Optional<ItemStack> removeBracket(BlockGetter world, BlockPos pos, boolean inOnReplacedContext) {
-        BracketedBlockEntityBehaviour behaviour =
-                BracketedBlockEntityBehaviour.get(world, pos, BracketedBlockEntityBehaviour.TYPE);
-        if (behaviour == null)
-            return Optional.empty();
-        BlockState bracket = behaviour.removeBracket(inOnReplacedContext);
-        if (bracket == null)
-            return Optional.empty();
-        return Optional.of(new ItemStack(bracket.getBlock()));
-    }
-
-    @Override
-    public boolean isPathfindable(BlockState state, BlockGetter reader, BlockPos pos, PathComputationType type) {
-        return false;
-    }
-
-    @Override
-    public Class<IronPipeBlockEntity> getBlockEntityClass() {
-        return IronPipeBlockEntity.class;
-    }
+//
+//    @Override
+//    public FluidState getFluidState(BlockState state) {
+//        return state.getValue(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getSource(false)
+//                : Fluids.EMPTY.defaultFluidState();
+//    }
+//
+//    @Override
+//    public Optional<ItemStack> removeBracket(BlockGetter world, BlockPos pos, boolean inOnReplacedContext) {
+//        BracketedBlockEntityBehaviour behaviour =
+//                BracketedBlockEntityBehaviour.get(world, pos, BracketedBlockEntityBehaviour.TYPE);
+//        if (behaviour == null)
+//            return Optional.empty();
+//        BlockState bracket = behaviour.removeBracket(inOnReplacedContext);
+//        if (bracket == null)
+//            return Optional.empty();
+//        return Optional.of(new ItemStack(bracket.getBlock()));
+//    }
+//
+//    @Override
+//    public boolean isPathfindable(BlockState state, BlockGetter reader, BlockPos pos, PathComputationType type) {
+//        return false;
+//    }
+//
+//    @Override
+//    public Class<IronPipeBlockEntity> getBlockEntityClass() {
+//        return IronPipeBlockEntity.class;
+//    }
 
     @Override
     public BlockEntityType<? extends IronPipeBlockEntity> getBlockEntityType() {
         return CGCBlockEntities.IRON_PIPE.get();
     }
+//
+//    @Override
+//    public boolean supportsExternalFaceHiding(BlockState state) {
+//        return false;
+//    }
+//
+//    @Override
+//    public VoxelShape getOcclusionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+//        return OCCLUSION_BOX;
+//    }
+//
+//    @Override
+//    public BlockState rotate(BlockState pState, Rotation pRotation) {
+//        return FluidPipeBlockRotation.rotate(pState, pRotation);
+//    }
+//
+//    @Override
+//    public BlockState mirror(BlockState pState, Mirror pMirror) {
+//        return FluidPipeBlockRotation.mirror(pState, pMirror);
+//    }
+//
+//    @Override
+//    public BlockState transform(BlockState state, StructureTransform transform) {
+//        return FluidPipeBlockRotation.transform(state, transform);
+//    }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public VoxelShape getOcclusionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
-        return OCCLUSION_BOX;
-    }
-
-    @Override
-    public BlockState rotate(BlockState pState, Rotation pRotation) {
-        return FluidPipeBlockRotation.rotate(pState, pRotation);
-    }
-
-    @Override
-    public BlockState mirror(BlockState pState, Mirror pMirror) {
-        return FluidPipeBlockRotation.mirror(pState, pMirror);
-    }
-
-    @Override
-    public BlockState transform(BlockState state, StructureTransform transform) {
-        return FluidPipeBlockRotation.transform(state, transform);
-    }
     public static boolean isPressurizedPipe(BlockState state) {
         return state.getBlock() instanceof IronPipeBlock;
     }
