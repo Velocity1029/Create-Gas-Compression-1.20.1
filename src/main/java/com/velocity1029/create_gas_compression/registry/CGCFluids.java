@@ -87,7 +87,7 @@ public class CGCFluids {
                 .tag(tags)
                 .tag(CGCTags.CGCFluidTags.GAS.tag)
                 //  .source(GasFluid.Source::new)
-
+                .properties(properties -> properties.density(-1))
                 .bucket()
                 .lang(lang_name+" Tank")
                 .tag(CGCTags.forgeItemTag("buckets/"+name))

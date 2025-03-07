@@ -1,5 +1,6 @@
 {
   "block.create_gas_compression.iron_pipe": "Iron Pipe",
+  "block.create_gas_compression.iron_tank": "Iron Tank",
   "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine",
   "fluid.create_gas_compression.air": "Air",
   "fluid.create_gas_compression.carbon_dioxide": "Carbon Dioxide",

@@ -7,6 +7,8 @@ import com.velocity1029.create_gas_compression.blocks.engines.EngineBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineRenderer;
 import com.velocity1029.create_gas_compression.blocks.engines.variants.NaturalGasVariant;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.tanks.IronTankRenderer;
 
 import static com.velocity1029.create_gas_compression.CreateGasCompression.REGISTRATE;
 
@@ -22,6 +24,12 @@ public class CGCBlockEntities {
     public static final BlockEntityEntry<IronPipeBlockEntity> IRON_PIPE = REGISTRATE
             .blockEntity("iron_pipe", IronPipeBlockEntity::new)
             .validBlocks(CGCBlocks.IRON_PIPE)
+            .register();
+
+    public static final BlockEntityEntry<IronTankBlockEntity> IRON_TANK = REGISTRATE
+            .blockEntity("iron_tank", IronTankBlockEntity::new)
+            .validBlocks(CGCBlocks.IRON_TANK)
+            .renderer(() -> IronTankRenderer::new)
             .register();
 
     // Load this class

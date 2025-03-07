@@ -1,6 +1,7 @@
 {
   "values": [
     "create_gas_compression:natural_gas_engine",
-    "create_gas_compression:iron_pipe"
+    "create_gas_compression:iron_pipe",
+    "create_gas_compression:iron_tank"
   ]
 }
