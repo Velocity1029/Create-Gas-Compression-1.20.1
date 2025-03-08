@@ -16,7 +16,11 @@ import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.BlockStateGen;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
+import com.simibubi.create.infrastructure.config.CStress;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlock;
+import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlock;
+import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
@@ -62,7 +66,7 @@ public class CGCBlocks {
     public static final BlockEntry<IronTankBlock> IRON_TANK = REGISTRATE.block("iron_tank", IronTankBlock::regular)
             .initialProperties(() -> Blocks.IRON_BLOCK)
             .properties(p -> p.noOcclusion()
-            .isRedstoneConductor((p1, p2, p3) -> true))
+                    .isRedstoneConductor((p1, p2, p3) -> true))
             .transform(pickaxeOnly())
             .blockstate(new IronTankGenerator()::generate)
             .onRegister(CreateRegistrate.blockModel(() -> IronTankModel::standard))
@@ -74,6 +78,45 @@ public class CGCBlocks {
             .model(AssetLookup.customBlockItemModel("_", "block_single_window"))
             .build()
             .register();
+
+    // Compressor
+
+    public static final BlockEntry<CompressorFrameBlock> COMPRESSOR_FRAME = REGISTRATE.block("compressor_frame", CompressorFrameBlock::new)
+            .initialProperties(() -> Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion()
+                    .isRedstoneConductor((p1, p2, p3) -> true))
+            .transform(pickaxeOnly())
+            .blockstate(BlockStateGen.directionalBlockProvider(false))
+//            .onRegister(CreateRegistrate.blockModel(() -> IronTankModel::standard))
+//            .transform(displaySource(AllDisplaySources.BOILER))
+//            .transform(mountedFluidStorage(AllMountedStorageTypes.FLUID_TANK))
+//            .onRegister(movementBehaviour(new FluidTankMovementBehavior()))
+//            .addLayer(() -> RenderType::cutoutMipped)
+            .item()
+//            .model(AssetLookup.customBlockItemModel("_", "block_single_window"))
+            .build()
+            .register();
+
+    public static final BlockEntry<CompressorGuideBlock> COMPRESSOR_GUIDE =
+            REGISTRATE.block("compressor_guide", CompressorGuideBlock::new)
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .transform(pickaxeOnly())
+                    .blockstate((c, p) -> p.horizontalFaceBlock(c.get(), AssetLookup.partialBaseModel(c, p)))
+//                    .transform(CStress.setImpact(1024.0))
+//                    .onRegister(BlockStressValues.setGeneratorSpeed(64, true))
+                    .item()
+                    .transform(customItemModel())
+                    .register();
+
+    public static final BlockEntry<CompressorCylinderBlock> COMPRESSOR_CYLINDER =
+            REGISTRATE.block("compressor_cylinder", CompressorCylinderBlock::new)
+                .initialProperties(() -> Blocks.IRON_BLOCK)
+                .properties(p -> p.mapColor(MapColor.METAL))
+                .transform(pickaxeOnly())
+                .blockstate(BlockStateGen.axisBlockProvider(false))
+//                .onRegister(CreateRegistrate.blockModel(() -> BracketedKineticBlockModel::new))
+                .simpleItem()
+                .register();
 
     // Load this class
 

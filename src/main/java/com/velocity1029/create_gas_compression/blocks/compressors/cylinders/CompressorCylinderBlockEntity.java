@@ -10,7 +10,9 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -19,8 +21,52 @@ import java.util.List;
 import java.util.Map;
 
 public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
+
+    public BlockPos guidePos;
+    public float compressorEfficiency;
+    public int movementDirection;
+    public int initialTicks;
+    public static Block guideKey;
+
     public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
+    }
+
+    public void update(BlockPos sourcePos, int direction, float efficiency) {
+        BlockPos key = worldPosition.subtract(sourcePos);
+        guidePos = key;
+        float prev = compressorEfficiency;
+        compressorEfficiency = efficiency;
+        int prevDirection = this.movementDirection;
+        if (Mth.equal(efficiency, prev) && prevDirection == direction)
+            return;
+
+        guideKey = level.getBlockState(sourcePos)
+                .getBlock();
+        this.movementDirection = direction;
+//        // TODO make pump equivalent of updateGeneratedRotation in PoweredShaftBlockEntity
+//        updatepumpfluidspeeddirectionstuffandthings();
+//
+    }
+
+    public void remove(BlockPos sourcePos) {
+        if (!isPoweredBy(sourcePos))
+            return;
+
+        guidePos = null;
+        compressorEfficiency = 0;
+        movementDirection = 0;
+        guideKey = null;
+//        updatepumpfluidspeeddirectionstuffandthings();
+    }
+
+    public boolean canBePoweredBy(BlockPos globalPos) {
+        return initialTicks == 0 && (guidePos == null || isPoweredBy(globalPos));
+    }
+
+    public boolean isPoweredBy(BlockPos globalPos) {
+        BlockPos key = worldPosition.subtract(globalPos);
+        return key.equals(guidePos);
     }
 
 ////    PumpBlockEntity pump = new PumpBlockEntity(this.getType(), worldPosition, getBlockState());
