@@ -86,15 +86,17 @@ public class CGCBlocks {
             .properties(p -> p.noOcclusion()
                     .isRedstoneConductor((p1, p2, p3) -> true))
             .transform(pickaxeOnly())
-            .blockstate(BlockStateGen.directionalBlockProvider(false))
+//            .blockstate(BlockStateGen.horizontalBlockProvider(false))
+            .blockstate(BlockStateGen.directionalAxisBlockProvider())
 //            .onRegister(CreateRegistrate.blockModel(() -> IronTankModel::standard))
 //            .transform(displaySource(AllDisplaySources.BOILER))
 //            .transform(mountedFluidStorage(AllMountedStorageTypes.FLUID_TANK))
 //            .onRegister(movementBehaviour(new FluidTankMovementBehavior()))
 //            .addLayer(() -> RenderType::cutoutMipped)
             .item()
+            .transform(customItemModel())
 //            .model(AssetLookup.customBlockItemModel("_", "block_single_window"))
-            .build()
+//            .build()
             .register();
 
     public static final BlockEntry<CompressorGuideBlock> COMPRESSOR_GUIDE =

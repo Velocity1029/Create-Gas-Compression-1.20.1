@@ -33,7 +33,7 @@ public class CompressorData {
     public boolean passiveHeat;
     public int activeHeat;
 
-    public float waterSupply;
+    public float RPM = 0;
     public int attachedGuides;
     public int activePistons;
 //    public int attachedWhistles;
@@ -73,17 +73,17 @@ public class CompressorData {
 //        if (capacity == 0)
 //            return;
 
-        ticksUntilNextSample = SAMPLE_RATE;
-        supplyOverTime[currentIndex] = gatheredSupply / (float) SAMPLE_RATE;
-        waterSupply = Math.max(waterSupply, supplyOverTime[currentIndex]);
-        currentIndex = (currentIndex + 1) % supplyOverTime.length;
-        gatheredSupply = 0;
+//        ticksUntilNextSample = SAMPLE_RATE;
+//        supplyOverTime[currentIndex] = gatheredSupply / (float) SAMPLE_RATE;
+//        waterSupply = Math.max(waterSupply, supplyOverTime[currentIndex]);
+//        currentIndex = (currentIndex + 1) % supplyOverTime.length;
+//        gatheredSupply = 0;
 
-        if (currentIndex == 0) {
-            waterSupply = 0;
-            for (float i : supplyOverTime)
-                waterSupply = Math.max(i, waterSupply);
-        }
+//        if (currentIndex == 0) {
+//            waterSupply = 0;
+//            for (float i : supplyOverTime)
+//                waterSupply = Math.max(i, waterSupply);
+//        }
 
 //        if (controller instanceof CreativeFluidTankBlockEntity)
 //            waterSupply = waterSupplyPerLevel * 20;
@@ -92,6 +92,15 @@ public class CompressorData {
 //            controller.award(AllAdvancements.STEAM_ENGINE_MAXED);
 
         controller.notifyUpdate();
+    }
+
+    public float getCompressorEfficiency() {
+        int actualRPM = getActualRPM();
+        return attachedGuides <= actualRPM ? 1 : (float) actualRPM / attachedGuides;
+    }
+
+    public int getActualRPM() {
+        return (int) (6 * RPM);
     }
 
     public boolean isActive() {

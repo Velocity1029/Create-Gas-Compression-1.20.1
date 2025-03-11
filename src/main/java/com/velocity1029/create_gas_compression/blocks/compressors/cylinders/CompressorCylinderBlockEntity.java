@@ -1,12 +1,17 @@
 package com.velocity1029.create_gas_compression.blocks.compressors.cylinders;
 
+import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.content.kinetics.steamEngine.SteamEngineValueBox;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.utility.CreateLang;
+import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,9 +27,11 @@ import java.util.Map;
 
 public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
+//    protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
+
     public BlockPos guidePos;
     public float compressorEfficiency;
-    public int movementDirection;
+//    public int movementDirection;
     public int initialTicks;
     public static Block guideKey;
 
@@ -32,18 +39,36 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         super(typeIn, pos, state);
     }
 
-    public void update(BlockPos sourcePos, int direction, float efficiency) {
+    @Override
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+//        movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
+//                CreateLang.translateDirect("contraptions.windmill.rotation_direction"), this, new SteamEngineValueBox());
+//        movementDirection.onlyActiveWhen(() -> {
+//            CompressorGuideBlockEntity cylinder = getCylinder();
+//            return cylinder == null || !cylinder.hasSource();
+//        });
+//        movementDirection.withCallback($ -> onDirectionChanged());
+//        behaviours.add(movementDirection);
+
+//        registerAwardables(behaviours, AllAdvancements.STEAM_ENGINE);
+    }
+    // TODO onDirectionChanged??
+    private void onDirectionChanged() {
+    }
+
+    public void update(BlockPos sourcePos, float efficiency) {
         BlockPos key = worldPosition.subtract(sourcePos);
         guidePos = key;
         float prev = compressorEfficiency;
         compressorEfficiency = efficiency;
-        int prevDirection = this.movementDirection;
-        if (Mth.equal(efficiency, prev) && prevDirection == direction)
+//        int prevDirection = this.movementDirection;
+        if (Mth.equal(efficiency, prev)) //&& prevDirection == direction)
             return;
 
         guideKey = level.getBlockState(sourcePos)
                 .getBlock();
-        this.movementDirection = direction;
+//        this.movementDirection = direction; unnecessary
 //        // TODO make pump equivalent of updateGeneratedRotation in PoweredShaftBlockEntity
 //        updatepumpfluidspeeddirectionstuffandthings();
 //
@@ -55,7 +80,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
         guidePos = null;
         compressorEfficiency = 0;
-        movementDirection = 0;
+//        movementDirection = 0; unnecessary
         guideKey = null;
 //        updatepumpfluidspeeddirectionstuffandthings();
     }

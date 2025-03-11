@@ -1,4 +1,7 @@
 {
+  "block.create_gas_compression.compressor_cylinder": "Compressor Cylinder",
+  "block.create_gas_compression.compressor_frame": "Compressor Frame",
+  "block.create_gas_compression.compressor_guide": "Compressor Guide",
   "block.create_gas_compression.iron_pipe": "Iron Pipe",
   "block.create_gas_compression.iron_tank": "Iron Tank",
   "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine",

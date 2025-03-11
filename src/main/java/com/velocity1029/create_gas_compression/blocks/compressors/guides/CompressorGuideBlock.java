@@ -5,6 +5,7 @@ import static net.minecraft.world.level.block.state.properties.BlockStatePropert
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
+import com.simibubi.create.content.fluids.transfer.GenericItemEmptying;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
@@ -28,6 +29,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -48,6 +50,7 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.Tags;
 
 import java.util.function.Predicate;
 
@@ -102,6 +105,16 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
         if (placementHelper.matchesItem(heldItem))
             return placementHelper.getOffset(player, world, state, pos, ray)
                     .placeInWorld(world, (BlockItem) heldItem.getItem(), player, hand, ray);
+
+
+        boolean isDye = heldItem.is(Tags.Items.DYES);
+        boolean hasWater = GenericItemEmptying.emptyItem(world, heldItem, true)
+                .getFirst()
+                .getFluid()
+                .isSame(Fluids.WATER);
+        if (isDye || hasWater)
+            return onBlockEntityUse(world, pos,
+                    be -> be.applyColor(DyeColor.getColor(heldItem)) ? InteractionResult.SUCCESS : InteractionResult.PASS);
         return InteractionResult.PASS;
     }
 

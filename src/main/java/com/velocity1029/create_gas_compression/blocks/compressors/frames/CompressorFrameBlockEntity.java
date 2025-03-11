@@ -47,14 +47,18 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
         guideAxis = axis;
     }
 
+    public void setCompressorRPM() {
+        compressor.RPM = speed;
+    }
+
     public Direction.Axis getGuideAxis() {
         return guideAxis;
     }
 
-    @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-
-    }
+//    @Override
+//    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+//
+//    }
 
 //    public void updateCompressorState() {
 //        if (!isController())

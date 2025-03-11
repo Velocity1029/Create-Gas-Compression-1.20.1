@@ -3,6 +3,7 @@ package com.velocity1029.create_gas_compression.blocks.compressors.cylinders;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
+import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
@@ -27,7 +28,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import static net.minecraft.world.level.block.Rotation.CLOCKWISE_90;
 import static net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90;
 
-public class CompressorCylinderBlock extends PumpBlock implements ProperWaterloggedBlock {
+public class CompressorCylinderBlock extends Block implements ProperWaterloggedBlock, IBE<CompressorCylinderBlockEntity> {
 
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
@@ -41,7 +42,7 @@ public class CompressorCylinderBlock extends PumpBlock implements ProperWaterlog
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
-        super.createBlockStateDefinition(pBuilder.add(AXIS));
+        super.createBlockStateDefinition(pBuilder.add(AXIS, WATERLOGGED));
     }
 
     private void registerImpact(BlockState state) {
@@ -114,6 +115,11 @@ public class CompressorCylinderBlock extends PumpBlock implements ProperWaterlog
 //    public Class<CompressorGuideBlockEntity> getBlockEntityClass() {
 //        return CompressorGuideBlockEntity.class;
 //    }
+
+    @Override
+    public Class<CompressorCylinderBlockEntity> getBlockEntityClass() {
+        return CompressorCylinderBlockEntity.class;
+    }
 
     @Override
     public BlockEntityType<? extends CompressorCylinderBlockEntity> getBlockEntityType() {

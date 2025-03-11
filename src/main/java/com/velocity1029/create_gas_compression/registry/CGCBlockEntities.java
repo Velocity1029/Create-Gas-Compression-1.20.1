@@ -38,6 +38,7 @@ public class CGCBlockEntities {
 
     public static final BlockEntityEntry<CompressorFrameBlockEntity> COMPRESSOR_FRAME = REGISTRATE
             .blockEntity("compressor_frame", CompressorFrameBlockEntity::new)
+            .visual(() -> OrientedRotatingVisual.of(AllPartialModels.SHAFT), false)
             .validBlocks(CGCBlocks.COMPRESSOR_FRAME)
 //            .renderer(() -> CompressorFrameBlockRenderer::new)
             .register();
