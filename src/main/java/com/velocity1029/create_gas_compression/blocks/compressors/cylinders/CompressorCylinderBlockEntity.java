@@ -7,6 +7,7 @@ import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.steamEngine.SteamEngineValueBox;
+import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
@@ -42,6 +43,9 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
+        behaviours.add(new CompressorFluidTransferBehaviour(this));
+        registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
+        registerAwardables(behaviours, AllAdvancements.PUMP);
 //        movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
 //                CreateLang.translateDirect("contraptions.windmill.rotation_direction"), this, new SteamEngineValueBox());
 //        movementDirection.onlyActiveWhen(() -> {
@@ -50,8 +54,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 //        });
 //        movementDirection.withCallback($ -> onDirectionChanged());
 //        behaviours.add(movementDirection);
-
-//        registerAwardables(behaviours, AllAdvancements.STEAM_ENGINE);
     }
     // TODO onDirectionChanged??
     private void onDirectionChanged() {
@@ -138,36 +140,36 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 //
 //
 //
-//    class PumpFluidTransferBehaviour extends FluidTransportBehaviour {
-//
-//        public PumpFluidTransferBehaviour(SmartBlockEntity be) {
-//            super(be);
-//        }
-//
-//        @Override
-//        public void tick() {
-//            super.tick();
-//            for (Map.Entry<Direction, PipeConnection> entry : interfaces.entrySet()) {
-//                boolean pull = isPullingOnSide(isFront(entry.getKey()));
-//                Couple<Float> pressure = entry.getValue().getPressure();
-//                pressure.set(pull, Math.abs(getSpeed()));
-//                pressure.set(!pull, 0f);
-//            }
-//        }
-//
-//        @Override
-//        public boolean canHaveFlowToward(BlockState state, Direction direction) {
-//            return isSideAccessible(direction);
-//        }
-//
-//        @Override
-//        public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
-//                                                        Direction direction) {
-//            AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
-//            if (attachment == AttachmentTypes.RIM)
-//                return AttachmentTypes.NONE;
-//            return attachment;
-//        }
-//
-//    }
+    class CompressorFluidTransferBehaviour extends FluidTransportBehaviour {
+
+        public CompressorFluidTransferBehaviour(SmartBlockEntity be) {
+            super(be);
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            if (interfaces == null) return;
+            for (Map.Entry<Direction, PipeConnection> entry : interfaces.entrySet()) {
+                boolean pull = isPullingOnSide(isFront(entry.getKey()));
+                Couple<Float> pressure = entry.getValue().getPressure();
+                pressure.set(pull, Math.abs(getSpeed()));
+                pressure.set(!pull, 0f);
+            }
+        }
+
+        @Override
+        public boolean canHaveFlowToward(BlockState state, Direction direction) {
+            return isSideAccessible(direction);
+        }
+
+        @Override
+        public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
+                                                        Direction direction) {
+            AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
+            if (attachment == AttachmentTypes.RIM)
+                return AttachmentTypes.NONE;
+            return attachment;
+        }
+    }
 }

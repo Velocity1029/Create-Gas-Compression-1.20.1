@@ -5,6 +5,7 @@ import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameVisual;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlockEntity;
@@ -38,7 +39,7 @@ public class CGCBlockEntities {
 
     public static final BlockEntityEntry<CompressorFrameBlockEntity> COMPRESSOR_FRAME = REGISTRATE
             .blockEntity("compressor_frame", CompressorFrameBlockEntity::new)
-            .visual(() -> OrientedRotatingVisual.of(AllPartialModels.SHAFT), false)
+            .visual(() -> CompressorFrameVisual::new, false)
             .validBlocks(CGCBlocks.COMPRESSOR_FRAME)
 //            .renderer(() -> CompressorFrameBlockRenderer::new)
             .register();

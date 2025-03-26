@@ -12,10 +12,7 @@ import com.simibubi.create.AllMountedStorageTypes;
 import com.simibubi.create.AllTags;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.fluids.tank.FluidTankMovementBehavior;
-import com.simibubi.create.foundation.data.AssetLookup;
-import com.simibubi.create.foundation.data.BlockStateGen;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.simibubi.create.foundation.data.SharedProperties;
+import com.simibubi.create.foundation.data.*;
 import com.simibubi.create.infrastructure.config.CStress;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlock;
@@ -86,17 +83,12 @@ public class CGCBlocks {
             .properties(p -> p.noOcclusion()
                     .isRedstoneConductor((p1, p2, p3) -> true))
             .transform(pickaxeOnly())
-//            .blockstate(BlockStateGen.horizontalBlockProvider(false))
-            .blockstate(BlockStateGen.directionalAxisBlockProvider())
-//            .onRegister(CreateRegistrate.blockModel(() -> IronTankModel::standard))
-//            .transform(displaySource(AllDisplaySources.BOILER))
-//            .transform(mountedFluidStorage(AllMountedStorageTypes.FLUID_TANK))
-//            .onRegister(movementBehaviour(new FluidTankMovementBehavior()))
-//            .addLayer(() -> RenderType::cutoutMipped)
+            .blockstate((c, p) -> p.horizontalBlock(c.get(), p.models()
+                    .getExistingFile(p.modLoc("block/compressor_frame/block"))))
+            .addLayer(() -> RenderType::cutoutMipped)
             .item()
-            .transform(customItemModel())
-//            .model(AssetLookup.customBlockItemModel("_", "block_single_window"))
-//            .build()
+//            .transform(customItemModel())
+            .transform(ModelGen.customItemModel("compressor_frame", "item"))
             .register();
 
     public static final BlockEntry<CompressorGuideBlock> COMPRESSOR_GUIDE =

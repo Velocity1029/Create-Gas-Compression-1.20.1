@@ -1,7 +1,5 @@
 package com.velocity1029.create_gas_compression.blocks.compressors.guides;
 
-import static net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
-
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -54,6 +52,8 @@ import net.minecraftforge.common.Tags;
 
 import java.util.function.Predicate;
 
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.*;
+
 public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
         implements SimpleWaterloggedBlock, IWrenchable, IBE<CompressorGuideBlockEntity> {
 
@@ -82,11 +82,12 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
 
     public static boolean canAttach(LevelReader pReader, BlockPos pPos, Direction pDirection) {
         BlockPos blockpos = pPos.relative(pDirection);
-//        Block block = pReader.getBlockState(blockpos).getBlock();
+        BlockState blockState = pReader.getBlockState(blockpos);
         BlockEntity blockEntity = pReader.getBlockEntity(blockpos);
         if (blockEntity instanceof CompressorFrameBlockEntity frameEntity) {
-            Axis guideAxis = frameEntity.getGuideAxis();
-            return (guideAxis == null || guideAxis == pDirection.getAxis());
+            Axis facing = blockState.getValue(HORIZONTAL_FACING).getAxis();
+            Axis placement = pDirection.getAxis();
+            return (placement.isHorizontal() && facing != placement);
         }
         return false;
     }
@@ -177,7 +178,7 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
         CompressorFrameBlockEntity frameBlockEntity = pLevel.getBlockEntity(pPos) instanceof CompressorFrameBlockEntity ? (CompressorFrameBlockEntity) pLevel.getBlockEntity(pPos) : null;
         if (frameBlockEntity != null) {
             Axis axis = getFacing(pState).getAxis();
-            frameBlockEntity.setGuideAxis(placed ? axis : null);
+//            frameBlockEntity.compressor.placed ? axis : null;
         }
     };
 

@@ -4,10 +4,12 @@ import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.fluids.tank.SoundPool;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -33,6 +35,7 @@ public class CompressorData {
     public boolean passiveHeat;
     public int activeHeat;
 
+    public Direction direction;
     public float RPM = 0;
     public int attachedGuides;
     public int activePistons;
@@ -107,6 +110,10 @@ public class CompressorData {
         return attachedGuides > 0;
     }
 
+    public void clear() {
+        attachedGuides = 0;
+    }
+
     public boolean evaluate(CompressorFrameBlockEntity controller) {
         BlockPos controllerPos = controller.getBlockPos();
         Level level = controller.getLevel();
@@ -115,22 +122,22 @@ public class CompressorData {
         attachedGuides = 0;
 //        attachedWhistles = 0;
 
-//        for (int offset = 0; offset < controller.getSize(); offset++) {
-//            BlockPos pos = controllerPos.relative(direction, offset);
-//            BlockState blockState = level.getBlockState(pos);
-//            if (!CompressorFrameBlock.isFrame(blockState))
-//                continue;
-//            for (Direction d : Iterate.directions) {
-//                BlockPos attachedPos = pos.relative(d);
-//                BlockState attachedState = level.getBlockState(attachedPos);
-//                if (CGCBlocks.COMPRESSOR_GUIDE.has(attachedState) && CompressorGuideBlock.getFacing(attachedState) == d)
-//                    attachedGuides++;
-////                if (AllBlocks.STEAM_WHISTLE.has(attachedState)
-////                        && WhistleBlock.getAttachedDirection(attachedState)
-////                        .getOpposite() == d)
-////                    attachedWhistles++;
-//            }
-//        }
+        for (int offset = 0; offset < controller.getWidth(); offset++) {
+            BlockPos pos = controllerPos.relative(direction, offset);
+            BlockState blockState = level.getBlockState(pos);
+            if (!CompressorFrameBlock.isFrame(blockState))
+                continue;
+            for (Direction d : Iterate.directions) {
+                BlockPos attachedPos = pos.relative(d);
+                BlockState attachedState = level.getBlockState(attachedPos);
+                if (CGCBlocks.COMPRESSOR_GUIDE.has(attachedState) && CompressorGuideBlock.getFacing(attachedState) == d)
+                    attachedGuides++;
+//                if (AllBlocks.STEAM_WHISTLE.has(attachedState)
+//                        && WhistleBlock.getAttachedDirection(attachedState)
+//                        .getOpposite() == d)
+//                    attachedWhistles++;
+            }
+        }
 
 //        for (int yOffset = 0; yOffset < controller.height; yOffset++) {
 //            for (int xOffset = 0; xOffset < controller.width; xOffset++) {
@@ -154,7 +161,17 @@ public class CompressorData {
 //            }
 //        }
 
-        needsHeatLevelUpdate = true;
+//        needsHeatLevelUpdate = true;
         return prevGuides != attachedGuides; //|| prevWhistles != attachedWhistles;
+    }
+
+    public CompoundTag write() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putInt("Guides", attachedGuides);
+        return nbt;
+    }
+
+    public void read(CompoundTag nbt, int compressorSize) {
+        attachedGuides = nbt.getInt("Guides");
     }
 }
