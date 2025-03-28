@@ -2,6 +2,7 @@ package com.velocity1029.create_gas_compression.blocks.compressors.frames;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -58,9 +59,15 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
         return getBlockState().getValue(BlockStateProperties.HORIZONTAL_FACING).getOpposite();
     }
 
-    public void setCompressorRPM() {
+    @Override
+    public void onSpeedChanged(float previousSpeed) {
+        super.onSpeedChanged(previousSpeed);
         compressor.RPM = speed;
     }
+
+//    public void setCompressorRPM() {
+//        compressor.RPM = speed;
+//    }
 
 //    @Override
 //    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -108,8 +115,9 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
             updateConnectivity();
 //        if (fluidLevel != null)
 //            fluidLevel.tickChaser();
-        if (isController())
+        if (isController()) {
             compressor.tick(this);
+        }
     }
 
 //    @Override
@@ -139,6 +147,7 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
         if (changed) {
             notifyUpdate();
 //            compressor.checkPipeOrganAdvancement(this);
+//            getOrCreateNetwork().updateNetwork();
         }
     }
 
@@ -237,6 +246,16 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
         updateCompressorState();
         setChanged();
     }
+
+//    @Override
+//    public float calculateStressApplied() {
+//        float impact = (float) BlockStressValues.getImpact(getStressConfigKey());
+//        if (isController()) {
+//            impact += compressor.calculateStressApplied(this);
+//        }
+//        this.lastStressApplied = impact;
+//        return impact;
+//    }
 
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {

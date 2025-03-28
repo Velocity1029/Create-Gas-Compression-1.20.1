@@ -100,8 +100,8 @@ public class CompressorGuideBlockEntity extends SmartBlockEntity implements IHav
 //            facing = blockState.getValue(CompressorGuideBlock.FACING);
 
 
-        float efficiency = Mth.clamp(frame.compressor.getCompressorEfficiency(), 0, 1);
-        if (efficiency > 0)
+        float efficiency = frame.compressor.getCompressorSpeed();
+//        if (efficiency > 0)
 
 //            award(CGCAdvancements.COMPRESSOR);
 
@@ -151,12 +151,12 @@ public class CompressorGuideBlockEntity extends SmartBlockEntity implements IHav
         }
         if (frame == null)
             return null;
-//        return frame.getControllerBE();
-        return null; //TODO is this ok?
+        return frame.getControllerBE();
+//        return null; //TODO is this ok?
     }
 
     public boolean isValid() {
-        Direction dir = CompressorGuideBlock.getConnectedDirection(getBlockState()).getOpposite();
+        Direction dir = CompressorGuideBlock.getConnectedDirection(getBlockState());
 
         Level level = getLevel();
         if (level == null)

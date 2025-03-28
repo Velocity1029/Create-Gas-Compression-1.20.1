@@ -144,7 +144,7 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
                 // Pressure explosion functionality
                 CompoundTag fluidTags = internalFluid.getTag();
-                if (fluidTags != null && fluidTags.contains("Pressure", Tag.TAG_INT) && fluidTags.getInt("Pressure") > 0) {
+                if (fluidTags != null && fluidTags.contains("Pressure", Tag.TAG_FLOAT) && fluidTags.getInt("Pressure") > 0) {
                     // If the connected block isn't pressurized
                     BlockPos connectedPos = pos.relative(connection.side);
                     BlockState connectedBlock = world.getBlockState(connectedPos);
@@ -167,4 +167,15 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
         for (PipeConnection connection : connections)
             connection.tickFlowProgress(world, pos);
     }
+
+//    @Override
+//    public FluidStack getProvidedOutwardFluid(Direction side) {
+//        FluidStack fluid = super.getProvidedOutwardFluid(side);
+//        if (fluid == null || fluid.isEmpty()) return fluid;
+//        CompoundTag fluidTag = fluid.getOrCreateTag();
+//        float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
+//        fluid.getTag().putFloat("Pressure", pressure * 2);
+//        fluid.setAmount(fluid.getAmount() / 2);
+//        return fluid;
+//    }
 }

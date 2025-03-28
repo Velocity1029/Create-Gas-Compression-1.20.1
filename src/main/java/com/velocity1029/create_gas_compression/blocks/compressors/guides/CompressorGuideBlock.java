@@ -129,7 +129,7 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
 
     @Override
     public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pIsMoving) {
-        updateCompressorState(pState, pLevel, pPos.relative(getFacing(pState).getOpposite()), true);
+        CompressorFrameBlock.updateCompressorState(pState, pLevel, pPos.relative(getFacing(pState).getOpposite()), true);
         BlockPos cylinderPos = getCylinderPos(pState, pPos);
         BlockState cylinderState = pLevel.getBlockState(cylinderPos);
 //        if (isCylinderValid(pState, cylinderState))
@@ -141,7 +141,7 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
     public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (pState.hasBlockEntity() && (!pState.is(pNewState.getBlock()) || !pNewState.hasBlockEntity()))
             pLevel.removeBlockEntity(pPos);
-        updateCompressorState(pState, pLevel, pPos.relative(getFacing(pState).getOpposite()), false);
+        CompressorFrameBlock.updateCompressorState(pState, pLevel, pPos.relative(getFacing(pState).getOpposite()), false);
         BlockPos cylinderPos = getCylinderPos(pState, pPos);
         BlockState cylinderState = pLevel.getBlockState(cylinderPos);
         if (CGCBlocks.COMPRESSOR_CYLINDER.has(cylinderState))
@@ -172,15 +172,6 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
     public boolean isPathfindable(BlockState state, BlockGetter reader, BlockPos pos, PathComputationType type) {
         return false;
     }
-
-    public static void updateCompressorState(BlockState pState, Level pLevel, BlockPos pPos, boolean placed) {
-        //TODO
-        CompressorFrameBlockEntity frameBlockEntity = pLevel.getBlockEntity(pPos) instanceof CompressorFrameBlockEntity ? (CompressorFrameBlockEntity) pLevel.getBlockEntity(pPos) : null;
-        if (frameBlockEntity != null) {
-            Axis axis = getFacing(pState).getAxis();
-//            frameBlockEntity.compressor.placed ? axis : null;
-        }
-    };
 
     public static Direction getFacing(BlockState sideState) {
         return getConnectedDirection(sideState);

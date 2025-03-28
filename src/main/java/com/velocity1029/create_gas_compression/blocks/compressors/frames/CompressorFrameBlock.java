@@ -148,6 +148,19 @@ public class CompressorFrameBlock extends HorizontalKineticBlock implements IBE<
         return state.getBlock() instanceof CompressorFrameBlock;
     }
 
+    public static void updateCompressorState(BlockState pState, Level pLevel, BlockPos pPos, boolean placed) {
+        BlockState tankState = pLevel.getBlockState(pPos);
+        if (!(tankState.getBlock() instanceof CompressorFrameBlock frame))
+            return;
+        CompressorFrameBlockEntity frameBE = frame.getBlockEntity(pLevel, pPos);
+        if (frameBE == null)
+            return;
+        CompressorFrameBlockEntity controllerBE = frameBE.getControllerBE();
+        if (controllerBE == null)
+            return;
+        controllerBE.updateCompressorState();
+    };
+
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction preferred = getPreferredHorizontalFacing(context);

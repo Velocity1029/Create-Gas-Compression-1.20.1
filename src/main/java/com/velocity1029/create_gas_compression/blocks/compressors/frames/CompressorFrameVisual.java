@@ -28,10 +28,13 @@ public class CompressorFrameVisual extends KineticBlockEntityVisual<CompressorFr
         super(context, blockEntity, partialTick);
 
         final Direction blockFacing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        final boolean isController = blockEntity.isController();
 
         updateSourceFacing();
 
-        var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF));
+        var instancer = isController ?
+                instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF))
+                : instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT));
 
         for (Direction direction : Iterate.directions) {
             final Direction.Axis axis = direction.getAxis();
@@ -43,7 +46,7 @@ public class CompressorFrameVisual extends KineticBlockEntityVisual<CompressorFr
 
             instance.setup(blockEntity, axis, getSpeed(direction))
                     .setPosition(getVisualPosition())
-                    .rotateToFace(Direction.SOUTH, direction)
+                    .rotateToFace(isController ? Direction.SOUTH : Direction.UP, direction)
                     .setChanged();
 
             keys.put(direction, instance);

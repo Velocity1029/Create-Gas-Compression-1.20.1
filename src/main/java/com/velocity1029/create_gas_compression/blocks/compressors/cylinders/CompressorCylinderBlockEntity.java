@@ -1,9 +1,11 @@
 package com.velocity1029.create_gas_compression.blocks.compressors.cylinders;
 
+import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
+import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.steamEngine.SteamEngineValueBox;
@@ -12,6 +14,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
+import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
+import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
@@ -19,10 +23,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.fluids.FluidStack;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -42,10 +49,12 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        behaviours.add(new PressurizedFluidTransportBehaviour(this));
         super.addBehaviours(behaviours);
-        behaviours.add(new CompressorFluidTransferBehaviour(this));
-        registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
-        registerAwardables(behaviours, AllAdvancements.PUMP);
+//        behaviours.remove(getBehaviour(PumpFluidTransferBehaviour));
+//        registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
+//        registerAwardables(behaviours, AllAdvancements.PUMP);
+
 //        movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
 //                CreateLang.translateDirect("contraptions.windmill.rotation_direction"), this, new SteamEngineValueBox());
 //        movementDirection.onlyActiveWhen(() -> {
@@ -68,8 +77,24 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         if (Mth.equal(efficiency, prev)) //&& prevDirection == direction)
             return;
 
+        setSpeed(efficiency);
+
         guideKey = level.getBlockState(sourcePos)
                 .getBlock();
+        BlockEntity blockEntity = level.getBlockEntity(sourcePos);
+        if (blockEntity instanceof CompressorGuideBlockEntity guideBlockEntity) {
+//            BlockEntity controller = level.getBlockEntity(guideBlockEntity.getFrame().getController());
+            BlockEntity frame = guideBlockEntity.getFrame();
+            if (frame == null) {
+                if (hasSource()) removeSource();
+            } else {
+                setSource(frame.getBlockPos());
+            }
+//            if (controller instanceof CompressorFrameBlockEntity frameBlockEntity) {
+//                frameBlockEntity.getOrCreateNetwork().add(this);
+//
+//            }
+        }
 //        this.movementDirection = direction; unnecessary
 //        // TODO make pump equivalent of updateGeneratedRotation in PoweredShaftBlockEntity
 //        updatepumpfluidspeeddirectionstuffandthings();
@@ -84,6 +109,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         compressorEfficiency = 0;
 //        movementDirection = 0; unnecessary
         guideKey = null;
+        removeSource();
 //        updatepumpfluidspeeddirectionstuffandthings();
     }
 
@@ -91,55 +117,45 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return initialTicks == 0 && (guidePos == null || isPoweredBy(globalPos));
     }
 
+    public float getImpact() {
+        float impact = (float) BlockStressValues.getImpact(getStressConfigKey());
+        return impact;
+    }
+
     public boolean isPoweredBy(BlockPos globalPos) {
         BlockPos key = worldPosition.subtract(globalPos);
         return key.equals(guidePos);
     }
 
-////    PumpBlockEntity pump = new PumpBlockEntity(this.getType(), worldPosition, getBlockState());
-//    Couple<MutableBoolean> sidesToUpdate;
-//    boolean scheduleFlip;
-//
-//    public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
-//        super(typeIn, pos, state);
-//        sidesToUpdate = Couple.create(MutableBoolean::new);
-//    }
-//
-//    @Override
-//    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-//        super.addBehaviours(behaviours);
-//        behaviours.add(new PumpFluidTransferBehaviour(this));
-////        registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
-////        registerAwardables(behaviours, AllAdvancements.PUMP);
-//    }
-//
-//    @Override
-//    public void tick() {
-//        super.tick();
-//
-//        if (level.isClientSide && !isVirtual())
-//            return;
-//
-//        if (scheduleFlip) {
-//            level.setBlockAndUpdate(worldPosition,
-//                    getBlockState().setValue(CompressorCylinderBlock.FACING, getBlockState().getValue(CompressorCylinderBlock.FACING)
-//                            .getOpposite()));
-//            scheduleFlip = false;
-//        }
-//
-//        sidesToUpdate.forEachWithContext((update, isFront) -> {
-//            if (update.isFalse())
-//                return;
-//            update.setFalse();
-//            distributePressureTo(isFront ? getFront() : getFront().getOpposite());
-//        });
-//    }
-//
-//
-//
-//
-//
-//
+    @Override
+    protected boolean isFront(Direction side) {
+        BlockState blockState = getBlockState();
+        if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
+            return false;
+        Direction front = blockState.getValue(CompressorCylinderBlock.FACING);
+        boolean isFront = side == front;
+        return isFront;
+    }
+
+    @Override
+    @Nullable
+    protected Direction getFront() {
+        BlockState blockState = getBlockState();
+        if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
+            return null;
+        return blockState.getValue(CompressorCylinderBlock.FACING);
+    }
+
+    @Override
+    public boolean isSideAccessible(Direction side) {
+        BlockState blockState = getBlockState();
+        if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
+            return false;
+        return blockState.getValue(CompressorCylinderBlock.FACING)
+                .getAxis() == side.getAxis();
+    }
+
+
     class CompressorFluidTransferBehaviour extends FluidTransportBehaviour {
 
         public CompressorFluidTransferBehaviour(SmartBlockEntity be) {
@@ -170,6 +186,13 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
             if (attachment == AttachmentTypes.RIM)
                 return AttachmentTypes.NONE;
             return attachment;
+        }
+
+        @Override
+        public FluidStack getProvidedOutwardFluid(Direction side) {
+            FluidStack fluid = super.getProvidedOutwardFluid(side);
+
+            return fluid;
         }
     }
 }
