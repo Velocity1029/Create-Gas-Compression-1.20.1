@@ -1,32 +1,242 @@
 {
   "variants": {
-    "facing=east,waterlogged=false": {
+    "end=false,facing=east,shape=controller,start=false,waterlogged=false": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 90
     },
-    "facing=east,waterlogged=true": {
+    "end=false,facing=east,shape=controller,start=false,waterlogged=true": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 90
     },
-    "facing=north,waterlogged=false": {
+    "end=false,facing=east,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=east,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=east,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=east,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=east,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=east,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=false,facing=north,shape=controller,start=false,waterlogged=false": {
       "model": "create_gas_compression:block/compressor_frame/block"
     },
-    "facing=north,waterlogged=true": {
+    "end=false,facing=north,shape=controller,start=false,waterlogged=true": {
       "model": "create_gas_compression:block/compressor_frame/block"
     },
-    "facing=south,waterlogged=false": {
+    "end=false,facing=north,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=north,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=north,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=north,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=north,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=north,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=false,facing=south,shape=controller,start=false,waterlogged=false": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 180
     },
-    "facing=south,waterlogged=true": {
+    "end=false,facing=south,shape=controller,start=false,waterlogged=true": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 180
     },
-    "facing=west,waterlogged=false": {
+    "end=false,facing=south,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=south,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=south,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=south,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=south,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=south,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=false,facing=west,shape=controller,start=false,waterlogged=false": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 270
     },
-    "facing=west,waterlogged=true": {
+    "end=false,facing=west,shape=controller,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=false,facing=west,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=east,shape=controller,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=controller,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=east,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 90
+    },
+    "end=true,facing=north,shape=controller,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=controller,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=north,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block"
+    },
+    "end=true,facing=south,shape=controller,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=controller,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=south,shape=drive,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 180
+    },
+    "end=true,facing=west,shape=controller,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=controller,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=controller,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=controller,start=true,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=drive,start=false,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=drive,start=false,waterlogged=true": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=drive,start=true,waterlogged=false": {
+      "model": "create_gas_compression:block/compressor_frame/block",
+      "y": 270
+    },
+    "end=true,facing=west,shape=drive,start=true,waterlogged=true": {
       "model": "create_gas_compression:block/compressor_frame/block",
       "y": 270
     }

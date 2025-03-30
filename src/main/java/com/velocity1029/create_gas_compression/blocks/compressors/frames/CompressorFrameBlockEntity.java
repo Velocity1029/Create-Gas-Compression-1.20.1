@@ -4,13 +4,16 @@ import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.content.kinetics.belt.BeltBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.IMultiBlockEntityCompressor;
 import com.velocity1029.create_gas_compression.blocks.compressors.CompressorConnectivityHandler;
 import com.velocity1029.create_gas_compression.blocks.compressors.CompressorData;
+import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
+import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -62,7 +65,32 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
     @Override
     public void onSpeedChanged(float previousSpeed) {
         super.onSpeedChanged(previousSpeed);
-        compressor.RPM = speed;
+        compressor.setCompressorSpeed(speed);
+    }
+
+    @Override
+    public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
+        if (other instanceof CompressorGuideBlockEntity guideTarget) {
+            return guideTarget.getFrame().equals(this);
+//            BlockEntity controllerEntity = level.getBlockEntity(getController());
+//            if (controllerEntity instanceof CompressorFrameBlockEntity controllerFrameEntity) {
+//                return controllerFrameEntity.compressor.guides.contains(guideTarget.getBlockPos());
+//            }
+        }
+        return false;
+    }
+
+    @Override
+    public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff,
+                                     boolean connectedViaAxes, boolean connectedViaCogs) {
+        if (target instanceof CompressorGuideBlockEntity guideTarget) {
+            return guideTarget.getFrame().equals(this) ? 1 : 0;
+//            BlockEntity controllerEntity = level.getBlockEntity(getController());
+//            if (controllerEntity instanceof CompressorFrameBlockEntity controllerFrameEntity) {
+//                return controllerFrameEntity.compressor.guides.contains(guideTarget.getBlockPos()) ? 1 : 0;
+//            }
+        }
+        return 0;
     }
 
 //    public void setCompressorRPM() {

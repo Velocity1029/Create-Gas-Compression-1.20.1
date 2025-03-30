@@ -1,5 +1,7 @@
 package com.velocity1029.create_gas_compression.registry;
 
+import com.tterrag.registrate.builders.BlockBuilder;
+import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.velocity1029.create_gas_compression.CreateGasCompression;
 import net.createmod.catnip.lang.Lang;
 import net.minecraft.core.Registry;
@@ -21,6 +23,10 @@ import net.minecraftforge.registries.IForgeRegistry;
 import java.util.Collections;
 
 public class CGCTags {
+
+    public static <T extends Block, P> NonNullFunction<BlockBuilder<T, P>, BlockBuilder<T, P>> isPressurized() {
+        return b -> b.tag(CGCBlockTags.PRESSURIZED.tag);
+    }
 
     public static <T> TagKey<T> optionalTag(IForgeRegistry<T> registry,
                                             ResourceLocation id) {

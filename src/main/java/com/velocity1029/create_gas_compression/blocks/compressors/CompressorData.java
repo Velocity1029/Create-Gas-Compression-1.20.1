@@ -8,6 +8,7 @@ import com.velocity1029.create_gas_compression.blocks.compressors.frames.Compres
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
+import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
 import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
@@ -34,7 +35,6 @@ public class CompressorData {
     // pooled water supply
     int gatheredSupply;
     float[] supplyOverTime = new float[10];
-    ArrayList<BlockPos> guides = new ArrayList<BlockPos>();
     int ticksUntilNextSample;
     int currentIndex;
 
@@ -104,22 +104,12 @@ public class CompressorData {
         controller.notifyUpdate();
     }
 
-    public float getCompressorSpeed() {
-        return Math.abs(RPM);
-//        int actualRPM = getActualRPM();
-//        return attachedGuides <= actualRPM ? 1 : (float) actualRPM / attachedGuides;
+    public void setCompressorSpeed(float speed) {
+        RPM = speed;
     }
 
-    public float calculateStressApplied(CompressorFrameBlockEntity controller) {
-        float impact = 0;
-        for (BlockPos guidePos : guides) {
-            BlockEntity entity = controller.getLevel().getBlockEntity(guidePos);
-            if (entity instanceof CompressorGuideBlockEntity guide) {
-                CompressorCylinderBlockEntity cylinder = guide.getCylinder();
-                impact += cylinder.getImpact();
-            }
-        }
-        return impact;
+    public float getCompressorSpeed() {
+        return Math.abs(RPM);
     }
 
     public int getActualRPM() {
@@ -137,7 +127,6 @@ public class CompressorData {
     public boolean evaluate(CompressorFrameBlockEntity controller) {
         BlockPos controllerPos = controller.getBlockPos();
         Level level = controller.getLevel();
-        guides.clear();
         int prevGuides = attachedGuides;
 //        int prevWhistles = attachedWhistles;
         attachedGuides = 0;
@@ -152,7 +141,10 @@ public class CompressorData {
                 BlockPos attachedPos = pos.relative(d);
                 BlockState attachedState = level.getBlockState(attachedPos);
                 if (CGCBlocks.COMPRESSOR_GUIDE.has(attachedState) && CompressorGuideBlock.getFacing(attachedState) == d) {
-                    guides.add(attachedPos);
+                    BlockEntity entity = level.getBlockEntity(attachedPos);
+                    if (entity instanceof CompressorGuideBlockEntity guideBlockEntity) {
+//                        TODO guideBlockEntity.getCylinder().update(attachedPos, getCompressorSpeed());
+                    }
                     attachedGuides++;
                 }
 //                if (AllBlocks.STEAM_WHISTLE.has(attachedState)
@@ -192,16 +184,11 @@ public class CompressorData {
         CompoundTag nbt = new CompoundTag();
         nbt.putInt("Guides", attachedGuides);
         nbt.putFloat("RPM", RPM);
-//        CompoundTag guides = new CompoundTag();
-//        for (BlockPos guide : this.guides) {
-//            guides.put(NbtUtils.writeBlockPos(guide));
-//        }
         return nbt;
     }
 
     public void read(CompoundTag nbt, int compressorSize) {
         attachedGuides = nbt.getInt("Guides");
         RPM = nbt.getFloat("RPM");
-//        guides = nbt.getList("GuidePositions")
     }
 }

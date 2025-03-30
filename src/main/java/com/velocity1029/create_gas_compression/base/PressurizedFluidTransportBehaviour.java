@@ -1,5 +1,7 @@
 package com.velocity1029.create_gas_compression.base;
 
+import com.simibubi.create.AllSpecialTextures;
+import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidReactions;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
@@ -11,6 +13,9 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
+import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.outliner.Outliner;
+import net.createmod.catnip.theme.Color;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +23,11 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.FluidStack;
+import org.joml.Vector3d;
 
 import java.util.Collection;
 import java.util.function.Predicate;
@@ -70,6 +79,74 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
         return attachment;
     }
 
+	public void visualizePressure(PipeConnection connection, BlockPos pos) {
+		if (!connection.hasPressure())
+			return;
+
+        connection.getPressure().forEachWithContext((pressure, inbound) -> {
+			if (inbound)
+				return;
+
+			Vec3 source = Vec3.atCenterOf(connection.side.getNormal());
+            Vec3 target = pos.getCenter();
+			Vec3 scaleVec = source.scale(-.25f * connection.side.getAxisDirection().getStep());
+            source = source.scale(inbound ? .35f : .45f);
+            target = source.add(scaleVec.scale(1/64f));
+			Outliner.getInstance().chaseAABB("pressure" + pos.toShortString() + connection.side.getName() + String.valueOf(inbound),
+                new AABB(Vec3.atLowerCornerOf(pos), Vec3.atLowerCornerOf(pos).add(1,1,1))
+//                        .move(source.add(VecHelper.getCenterOf(pos)))
+                        .inflate(scaleVec.x, scaleVec.y, scaleVec.z)
+                        .expandTowards(0, pressure / 64f, 0)
+                        .inflate(1 / 64f)).colored(inbound ? Color.GREEN : Color.RED);
+//				directionVec.add(new Vector3d(pos.getX(), pos.getY(), pos.getZ()))
+//					.grow(scaleVec.x, scaleVec.y, scaleVec.z)
+//					.expand(0, pressure / 64f, 0)
+//					.grow(1 / 64f));
+		});
+	}
+
+//	void visualizeFlow(PipeConnection connection, BlockPos pos) {
+//		if (!connection.hasFlow())
+//			return;
+//
+//        Vec3 directionVec = new Vec3(connection.side.step());
+//		float size = 1 / 4f;
+//		float length = .5f;
+//		PipeConnection.Flow flow = connection.flow.get();
+//		boolean inbound = flow.inbound;
+//		FluidStack fluid = flow.fluid;
+//
+//		if (flow.progress == null)
+//			return;
+//		float value = flow.progress.getValue();
+//        Vec3 start = directionVec.scale(inbound ? .5 : .5f - length);
+//        Vec3 offset = directionVec.scale(length * (inbound ? -1 : 1))
+//			.scale(value);
+//
+//		Vec3 scale = new Vec3(1, 1, 1).subtract(directionVec.scale(connection.side.getAxisDirection()
+//            .getStep()))
+//			.scale(size);
+//		AABB bb = new AABB(start, start.add(offset)).move(VecHelper.getCenterOf(pos))
+//                .inflate(scale.x, scale.y, scale.z);
+//
+//		int color = 0x7fdbda;
+//		if (!fluid.isEmpty()) {
+//			Fluid fluid2 = fluid.getFluid();
+//			if (fluid2 == Fluids.WATER)
+//				color = 0x1D4D9B;
+//			else if (fluid2 == Fluids.LAVA)
+//				color = 0xFF773D;
+//			else
+//				color = fluid2.getAttributes()
+//					.getColor(fluid);
+//		}
+//
+//		Outliner.getInstance().chaseAABB(this, bb)
+//			.withFaceTexture(AllSpecialTextures.SELECTION)
+//			.colored(color)
+//			.lineWidth(0);
+//	}
+
     @Override
     public void tick() {
         super.tick();
@@ -84,12 +161,13 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
         // Do not provide a lone pipe connection with its own flow input
         PipeConnection singleSource = null;
 
-//		if (onClient) {
-//			connections.forEach(connection -> {
+		if (world.isClientSide) {
+			connections.forEach(connection -> {
+                visualizePressure(connection, pos);
 //				connection.visualizeFlow(pos);
 //				connection.visualizePressure(pos);
-//			});
-//		}
+			});
+		}
 
         if (phase == UpdatePhase.WAIT_FOR_PUMPS) {
             phase = UpdatePhase.FLIP_FLOWS;
@@ -151,7 +229,7 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
                     if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
                         // Burst!
                         float radius = fluidTags.getInt("Pressure");
-                        world.explode(null, connectedPos.getX(), connectedPos.getY(), connectedPos.getZ(), radius, Level.ExplosionInteraction.BLOCK);
+//                        world.explode(null, connectedPos.getX(), connectedPos.getY(), connectedPos.getZ(), radius, Level.ExplosionInteraction.BLOCK);
                     }
 
                 }
@@ -167,15 +245,4 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
         for (PipeConnection connection : connections)
             connection.tickFlowProgress(world, pos);
     }
-
-//    @Override
-//    public FluidStack getProvidedOutwardFluid(Direction side) {
-//        FluidStack fluid = super.getProvidedOutwardFluid(side);
-//        if (fluid == null || fluid.isEmpty()) return fluid;
-//        CompoundTag fluidTag = fluid.getOrCreateTag();
-//        float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
-//        fluid.getTag().putFloat("Pressure", pressure * 2);
-//        fluid.setAmount(fluid.getAmount() / 2);
-//        return fluid;
-//    }
 }

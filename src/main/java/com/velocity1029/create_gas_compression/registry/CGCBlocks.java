@@ -6,6 +6,7 @@ import static com.simibubi.create.api.contraption.storage.fluid.MountedFluidStor
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 import static com.velocity1029.create_gas_compression.CreateGasCompression.REGISTRATE;
+import static com.velocity1029.create_gas_compression.registry.CGCTags.isPressurized;
 
 import com.simibubi.create.AllDisplaySources;
 import com.simibubi.create.AllMountedStorageTypes;
@@ -27,6 +28,7 @@ import com.velocity1029.create_gas_compression.blocks.tanks.IronTankGenerator;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankItem;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankModel;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
@@ -54,6 +56,7 @@ public class CGCBlocks {
                     .initialProperties(() -> Blocks.IRON_BLOCK)
                     .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
                     .transform(pickaxeOnly())
+                    .transform(isPressurized())
                     .blockstate(BlockStateGen.pipe())
                     .onRegister( CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
                     .item()
@@ -65,6 +68,7 @@ public class CGCBlocks {
             .properties(p -> p.noOcclusion()
                     .isRedstoneConductor((p1, p2, p3) -> true))
             .transform(pickaxeOnly())
+            .transform(isPressurized())
             .blockstate(new IronTankGenerator()::generate)
             .onRegister(CreateRegistrate.blockModel(() -> IronTankModel::standard))
             .transform(displaySource(AllDisplaySources.BOILER))
@@ -107,6 +111,7 @@ public class CGCBlocks {
                 .initialProperties(() -> Blocks.IRON_BLOCK)
                 .properties(p -> p.mapColor(MapColor.METAL))
                 .transform(pickaxeOnly())
+                .transform(isPressurized())
                 .blockstate(BlockStateGen.axisBlockProvider(false))
 //                .onRegister(CreateRegistrate.blockModel(() -> BracketedKineticBlockModel::new))
                 .simpleItem()

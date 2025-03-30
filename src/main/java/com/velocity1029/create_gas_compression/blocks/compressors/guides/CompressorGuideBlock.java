@@ -4,6 +4,7 @@ import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.fluids.transfer.GenericItemEmptying;
+import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
@@ -55,7 +56,7 @@ import java.util.function.Predicate;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.*;
 
 public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
-        implements SimpleWaterloggedBlock, IWrenchable, IBE<CompressorGuideBlockEntity> {
+        implements IRotate, SimpleWaterloggedBlock, IWrenchable, IBE<CompressorGuideBlockEntity> {
 
     private static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 
@@ -194,6 +195,16 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
     @Override
     public BlockEntityType<? extends CompressorGuideBlockEntity> getBlockEntityType() {
         return CGCBlockEntities.COMPRESSOR_GUIDE.get();
+    }
+
+    @Override
+    public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        return false;
+    }
+
+    @Override
+    public Axis getRotationAxis(BlockState state) {
+        return null;
     }
 
     @MethodsReturnNonnullByDefault

@@ -3,6 +3,7 @@ package com.velocity1029.create_gas_compression.blocks.compressors.guides;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.steamEngine.SteamEngineValueBox;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -30,7 +31,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Optional;
 
-public class CompressorGuideBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
+public class CompressorGuideBlockEntity extends KineticBlockEntity implements IHaveGoggleInformation {
 
     public WeakReference<CompressorCylinderBlockEntity> target;
     public WeakReference<CompressorFrameBlockEntity> source;
@@ -108,7 +109,7 @@ public class CompressorGuideBlockEntity extends SmartBlockEntity implements IHav
 //        int conveyedSpeedLevel =
 //                efficiency == 0 ? 1 : verticalTarget ? 1 : (int) GeneratingKineticBlockEntity.convertToDirection(1, facing);
 
-        cylinder.update(worldPosition, efficiency);
+//        cylinder.update(worldPosition, efficiency);
     }
 
     @Override
@@ -185,6 +186,21 @@ public class CompressorGuideBlockEntity extends SmartBlockEntity implements IHav
 //        }
 
         return true;
+    }
+
+    @Override
+    public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
+        return other.equals(getCylinder());
+    }
+
+    @Override
+    public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff,
+                                     boolean connectedViaAxes, boolean connectedViaCogs) {
+        return target.equals(getCylinder()) ? 1 : 0;
+//        if (target instanceof CompressorCylinderBlockEntity cylinderTarget) {
+//            return cylinderTarget.equals(getCylinder()) ? 1 : 0;
+//        }
+//        return 0;
     }
 
 //    public boolean isValid() {
