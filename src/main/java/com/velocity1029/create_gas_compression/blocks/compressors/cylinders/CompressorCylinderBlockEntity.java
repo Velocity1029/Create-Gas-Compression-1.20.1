@@ -13,7 +13,9 @@ import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.fluid.SmartFluidTank;
 import com.simibubi.create.foundation.utility.CreateLang;
+import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
@@ -32,18 +34,24 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
+public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
-//    protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
+    // Fluid Handling
+//    protected LazyOptional<IFluidHandler> fluidCapability;
+    protected FluidTank tankInput;
+    protected FluidTank tankOutput;
 
     Couple<MutableBoolean> sidesToUpdate;
     boolean pressureUpdate;
@@ -59,12 +67,36 @@ public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
 
     public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
+        createFluidTanks();
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
         behaviours.add(new CompressorFluidTransferBehaviour(this));
+    }
+
+    protected void createFluidTanks() {
+        tankInput = new SmartFluidTank(getCapacityMultiplier(), this::onFluidStackChangedInput);
+        tankOutput = new SmartFluidTank(getCapacityMultiplier(), (b) -> {});
+    }
+
+    protected void onFluidStackChangedInput(FluidStack newFluidStack) {
+        if (newFluidStack != null && !newFluidStack.isEmpty()) {
+            int fluidAmount = newFluidStack.getAmount();
+            FluidStack outputFluid = pressurizeFluid(newFluidStack);
+            int remainingAmount = fluidAmount - tankOutput.fill(outputFluid, IFluidHandler.FluidAction.EXECUTE);
+            newFluidStack.setAmount(remainingAmount);
+        }
+    }
+
+    protected FluidStack pressurizeFluid(FluidStack fluid) {
+        FluidStack outputFluid = fluid.copy();
+        CompoundTag outputTags = outputFluid.getOrCreateTag();
+        float pressure = outputTags.contains("Pressure", Tag.TAG_FLOAT) ? outputTags.getFloat("Pressure") : 1;
+        outputTags.putFloat("Pressure", pressure * 2f);
+        outputTags.putBoolean("Hot", true);
+        return outputFluid;
     }
 
     public void update(BlockPos sourcePos, float efficiency) {
@@ -208,8 +240,17 @@ public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {
         super.read(compound, clientPacket);
+        tankInput.readFromNBT(compound.getCompound("TankInput"));
+        tankOutput.readFromNBT(compound.getCompound("TankOutput"));
         if (compound.getBoolean("Reversed"))
             scheduleFlip = true;
+    }
+
+    @Override
+    protected void write(CompoundTag compound, boolean clientPacket) {
+        super.write(compound, clientPacket);
+        compound.put("TankInput", tankInput.writeToNBT(new CompoundTag()));
+        compound.put("TankOutput", tankOutput.writeToNBT(new CompoundTag()));
     }
 
     protected void distributePressureTo(Direction side) {
@@ -235,7 +276,7 @@ public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
 
             List<Pair<Integer, BlockPos>> frontier = new ArrayList<>();
             Set<BlockPos> visited = new HashSet<>();
-            int maxDistance = FluidPropagator.getPumpRange();
+            int maxDistance = FluidPropagator.getPumpRange();   //TODO higher max range for compressors
             frontier.add(Pair.of(1, start.getConnectedPos()));
 
             while (!frontier.isEmpty()) {
@@ -418,6 +459,20 @@ public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
         return false;
     }
 
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.FLUID_HANDLER)
+            if (side != getFront())
+                return LazyOptional.of(() -> tankInput).cast();
+            else
+                return LazyOptional.of(() -> tankOutput).cast();
+        return super.getCapability(cap, side);
+    }
+
+    public static int getCapacityMultiplier() {
+        return AllConfigs.server().fluids.fluidTankCapacity.get() * 1000;
+    }
 
     class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour {
 
@@ -457,8 +512,9 @@ public class CompressorCylinderBlockEntity extends KineticBlockEntity  {
             FluidStack fluid = super.getProvidedOutwardFluid(side).copy();
             if (fluid == null || fluid.isEmpty()) return fluid;
             CompoundTag fluidTag = fluid.getOrCreateTag();
-//            float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
-//            fluid.getTag().putFloat("Pressure", pressure * 2);
+            float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
+            fluid.getTag().putFloat("Pressure", pressure * 2);
+            fluid.getTag().putBoolean("Hot", true);
 //            fluid.setAmount(fluid.getAmount() / 2);
             return fluid;
         }

@@ -228,8 +228,8 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
                     BlockState connectedBlock = world.getBlockState(connectedPos);
                     if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
                         // Burst!
-                        float radius = fluidTags.getInt("Pressure");
-//                        world.explode(null, connectedPos.getX(), connectedPos.getY(), connectedPos.getZ(), radius, Level.ExplosionInteraction.BLOCK);
+                        float strength = fluidTags.getInt("Pressure");
+                        world.explode(null, connectedPos.getX(), connectedPos.getY(), connectedPos.getZ(), strength, Level.ExplosionInteraction.BLOCK);
                     }
 
                 }

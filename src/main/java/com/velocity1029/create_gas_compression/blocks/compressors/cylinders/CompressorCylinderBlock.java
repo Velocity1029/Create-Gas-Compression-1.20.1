@@ -29,7 +29,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import static net.minecraft.world.level.block.Rotation.CLOCKWISE_90;
 import static net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90;
 
-public class CompressorCylinderBlock extends DirectionalKineticBlock implements ProperWaterloggedBlock, IBE<CompressorCylinderBlockEntity> {
+public class CompressorCylinderBlock extends PumpBlock {
 
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
@@ -43,7 +43,7 @@ public class CompressorCylinderBlock extends DirectionalKineticBlock implements 
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
-        super.createBlockStateDefinition(pBuilder.add(AXIS, WATERLOGGED));
+        super.createBlockStateDefinition(pBuilder.add(AXIS));
     }
 
     private void registerImpact(BlockState state) {
@@ -117,10 +117,10 @@ public class CompressorCylinderBlock extends DirectionalKineticBlock implements 
 //        return CompressorGuideBlockEntity.class;
 //    }
 
-    @Override
-    public Class<CompressorCylinderBlockEntity> getBlockEntityClass() {
-        return CompressorCylinderBlockEntity.class;
-    }
+//    @Override
+//    public Class<CompressorCylinderBlockEntity> getBlockEntityClass() {
+//        return CompressorCylinderBlockEntity.class;
+//    }
 
     @Override
     public BlockEntityType<? extends CompressorCylinderBlockEntity> getBlockEntityType() {
