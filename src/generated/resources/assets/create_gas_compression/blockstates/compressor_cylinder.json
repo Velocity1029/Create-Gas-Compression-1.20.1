@@ -1,82 +1,108 @@
 {
   "variants": {
-    "axis=x,facing=down": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=east,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=east,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 90
     },
-    "axis=x,facing=east": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=east,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
+    },
+    "attached=east,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 180
+    },
+    "attached=east,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
+    },
+    "attached=east,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 270
+    },
+    "attached=north,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=north,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 90
     },
-    "axis=x,facing=north": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=north,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
+    },
+    "attached=north,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 180
+    },
+    "attached=north,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
+    },
+    "attached=north,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 270
+    },
+    "attached=south,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=south,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 90
     },
-    "axis=x,facing=south": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=south,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
+    },
+    "attached=south,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 180
+    },
+    "attached=south,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
+    },
+    "attached=south,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 270
+    },
+    "attached=west,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=west,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 90
     },
-    "axis=x,facing=up": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 90
+    "attached=west,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
     },
-    "axis=x,facing=west": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 90
-    },
-    "axis=y,facing=down": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=y,facing=east": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=y,facing=north": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=y,facing=south": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=y,facing=up": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=y,facing=west": {
-      "model": "create_gas_compression:block/compressor_cylinder"
-    },
-    "axis=z,facing=down": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=west,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 180
     },
-    "axis=z,facing=east": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 180
+    "attached=west,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
     },
-    "axis=z,facing=north": {
-      "model": "create_gas_compression:block/compressor_cylinder",
+    "attached=west,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
-      "y": 180
-    },
-    "axis=z,facing=south": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 180
-    },
-    "axis=z,facing=up": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 180
-    },
-    "axis=z,facing=west": {
-      "model": "create_gas_compression:block/compressor_cylinder",
-      "x": 90,
-      "y": 180
+      "y": 270
     }
   }
 }

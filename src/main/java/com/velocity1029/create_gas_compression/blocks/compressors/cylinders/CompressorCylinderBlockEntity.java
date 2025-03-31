@@ -85,13 +85,14 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         if (newFluidStack != null && !newFluidStack.isEmpty()) {
             int fluidAmount = newFluidStack.getAmount();
             FluidStack outputFluid = pressurizeFluid(newFluidStack);
-            int remainingAmount = fluidAmount - tankOutput.fill(outputFluid, IFluidHandler.FluidAction.EXECUTE);
+            int remainingAmount = fluidAmount - (tankOutput.fill(outputFluid, IFluidHandler.FluidAction.EXECUTE) * 2);
             newFluidStack.setAmount(remainingAmount);
         }
     }
 
     protected FluidStack pressurizeFluid(FluidStack fluid) {
         FluidStack outputFluid = fluid.copy();
+        outputFluid.setAmount(outputFluid.getAmount() / 2);
         CompoundTag outputTags = outputFluid.getOrCreateTag();
         float pressure = outputTags.contains("Pressure", Tag.TAG_FLOAT) ? outputTags.getFloat("Pressure") : 1;
         outputTags.putFloat("Pressure", pressure * 2f);
@@ -242,8 +243,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         super.read(compound, clientPacket);
         tankInput.readFromNBT(compound.getCompound("TankInput"));
         tankOutput.readFromNBT(compound.getCompound("TankOutput"));
-        if (compound.getBoolean("Reversed"))
-            scheduleFlip = true;
     }
 
     @Override
@@ -454,7 +453,8 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     @Override
     public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
         if (other instanceof CompressorGuideBlockEntity guideTarget) {
-            return guideTarget.getCylinder().equals(this);
+            CompressorCylinderBlockEntity cylinder = guideTarget.getCylinder();
+            return cylinder != null && cylinder.equals(this);
         }
         return false;
     }
@@ -507,16 +507,16 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
             return attachment;
         }
 
-        @Override
-        public FluidStack getProvidedOutwardFluid(Direction side) {
-            FluidStack fluid = super.getProvidedOutwardFluid(side).copy();
-            if (fluid == null || fluid.isEmpty()) return fluid;
-            CompoundTag fluidTag = fluid.getOrCreateTag();
-            float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
-            fluid.getTag().putFloat("Pressure", pressure * 2);
-            fluid.getTag().putBoolean("Hot", true);
-//            fluid.setAmount(fluid.getAmount() / 2);
-            return fluid;
-        }
+//        @Override
+//        public FluidStack getProvidedOutwardFluid(Direction side) {
+//            FluidStack fluid = super.getProvidedOutwardFluid(side).copy();
+//            if (fluid == null || fluid.isEmpty()) return fluid;
+//            CompoundTag fluidTag = fluid.getOrCreateTag();
+//            float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
+//            fluid.getTag().putFloat("Pressure", pressure * 2);
+//            fluid.getTag().putBoolean("Hot", true);
+////            fluid.setAmount(fluid.getAmount() / 2);
+//            return fluid;
+//        }
     }
 }

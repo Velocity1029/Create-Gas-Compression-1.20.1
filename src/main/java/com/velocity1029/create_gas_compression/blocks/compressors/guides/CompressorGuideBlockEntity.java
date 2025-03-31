@@ -152,7 +152,8 @@ public class CompressorGuideBlockEntity extends KineticBlockEntity implements IH
         }
         if (frame == null)
             return null;
-        return frame.getControllerBE();
+        return frame;
+//        return frame.getControllerBE();
 //        return null; //TODO is this ok?
     }
 
@@ -190,7 +191,7 @@ public class CompressorGuideBlockEntity extends KineticBlockEntity implements IH
 
     @Override
     public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
-        return other.equals(getCylinder());
+        return other.equals(getCylinder()) || other.equals(getFrame());
     }
 
     @Override

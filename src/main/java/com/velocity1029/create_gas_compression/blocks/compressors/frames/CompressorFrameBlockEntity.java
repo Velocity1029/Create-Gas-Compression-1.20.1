@@ -71,7 +71,8 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
     @Override
     public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
         if (other instanceof CompressorGuideBlockEntity guideTarget) {
-            return guideTarget.getFrame().equals(this);
+            CompressorFrameBlockEntity frame = guideTarget.getFrame();
+            return (frame != null && frame.equals(this));
 //            BlockEntity controllerEntity = level.getBlockEntity(getController());
 //            if (controllerEntity instanceof CompressorFrameBlockEntity controllerFrameEntity) {
 //                return controllerFrameEntity.compressor.guides.contains(guideTarget.getBlockPos());
@@ -84,7 +85,8 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
     public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff,
                                      boolean connectedViaAxes, boolean connectedViaCogs) {
         if (target instanceof CompressorGuideBlockEntity guideTarget) {
-            return guideTarget.getFrame().equals(this) ? 1 : 0;
+            CompressorFrameBlockEntity frame = guideTarget.getFrame();
+            return (frame != null && frame.equals(this)) ? 1 : 0;
 //            BlockEntity controllerEntity = level.getBlockEntity(getController());
 //            if (controllerEntity instanceof CompressorFrameBlockEntity controllerFrameEntity) {
 //                return controllerFrameEntity.compressor.guides.contains(guideTarget.getBlockPos()) ? 1 : 0;
@@ -336,12 +338,12 @@ public class CompressorFrameBlockEntity extends KineticBlockEntity implements IH
         compound.put("Compressor", compressor.write());
         if (lastKnownPos != null)
             compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
-        if (!isController())
-            compound.put("Controller", NbtUtils.writeBlockPos(controller));
         if (isController()) {
 //            compound.put("TankContent", tankInventory.writeToNBT(new CompoundTag()));
             compound.putInt("Size", length);
         }
+        if (controller != null)
+            compound.put("Controller", NbtUtils.writeBlockPos(controller));
         super.write(compound, clientPacket);
 
 //        if (!clientPacket)

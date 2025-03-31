@@ -1,11 +1,10 @@
 package com.velocity1029.create_gas_compression.blocks.compressors.guides;
 
-import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
+import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
 import com.simibubi.create.content.fluids.transfer.GenericItemEmptying;
 import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.BlockHelper;
@@ -43,6 +42,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -183,8 +183,8 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
     }
 
     public static boolean isCylinderValid(BlockState state, BlockState cylinder) {
-        return (CGCBlocks.COMPRESSOR_CYLINDER.has(cylinder))// || AllBlocks.POWERED_SHAFT.has(shaft))
-                && cylinder.getValue(CompressorCylinderBlock.AXIS) != getFacing(state).getAxis();
+        return (cylinder.getBlock() instanceof CompressorCylinderBlock)// || AllBlocks.POWERED_SHAFT.has(shaft))
+                && cylinder.getValue(CompressorCylinderBlock.ATTACHED_FACE) == getFacing(state).getOpposite();
     }
 
     @Override
@@ -225,23 +225,35 @@ public class CompressorGuideBlock extends FaceAttachedHorizontalDirectionalBlock
             BlockPos cylinderPos = CompressorGuideBlock.getCylinderPos(state, pos);
             BlockState cylinder = CGCBlocks.COMPRESSOR_CYLINDER.getDefaultState();
             for (Direction direction : Direction.orderedByNearest(player)) {
-                cylinder = cylinder.setValue(CompressorCylinderBlock.AXIS, direction.getAxis());
+                cylinder = cylinder.setValue(CompressorCylinderBlock.ATTACHED_FACE, direction);
                 if (isCylinderValid(state, cylinder))
                     break;
             }
+            for (Direction direction : Direction.orderedByNearest(player)) {
+                BlockPos adjPos = pos.relative(direction);
+                BlockState adjState = world.getBlockState(adjPos);
+                if (!FluidPipeBlock.canConnectTo(world, adjPos, adjState, direction) ||
+                        cylinder.getValue(CompressorCylinderBlock.ATTACHED_FACE).getAxis() == direction.getAxis())
+                    continue;
+                cylinder = cylinder.setValue(BlockStateProperties.FACING, direction);
+                if (isCylinderValid(state, cylinder))
+                    break;
+            }
+            if (cylinder.getValue(BlockStateProperties.FACING).getAxis() == cylinder.getValue(CompressorCylinderBlock.ATTACHED_FACE).getAxis())
+                cylinder = cylinder.setValue(BlockStateProperties.FACING, cylinder.getValue(BlockStateProperties.FACING).getClockWise());
 
             BlockState newState = world.getBlockState(cylinderPos);
             if (!newState.canBeReplaced())
                 return PlacementOffset.fail();
 
-            Axis axis = cylinder.getValue(CompressorCylinderBlock.AXIS);
+            Direction attachment = cylinder.getValue(CompressorCylinderBlock.ATTACHED_FACE);
+            Direction direction = cylinder.getValue(BlockStateProperties.FACING);
             return PlacementOffset.success(cylinderPos,
                     s -> BlockHelper
                             .copyProperties(s,
-//                                    (world.isClientSide ? AllBlocks.SHAFT : AllBlocks.POWERED_SHAFT).getDefaultState())
-//                            .setValue(PoweredShaftBlock.AXIS, axis));
                                     (CGCBlocks.COMPRESSOR_CYLINDER).getDefaultState())
-                            .setValue(CompressorCylinderBlock.AXIS, axis));
+                            .setValue(CompressorCylinderBlock.ATTACHED_FACE, attachment)
+                            .setValue(BlockStateProperties.FACING, direction));
         }
     }
 

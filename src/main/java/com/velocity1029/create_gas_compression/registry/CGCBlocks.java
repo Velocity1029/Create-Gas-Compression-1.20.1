@@ -112,7 +112,7 @@ public class CGCBlocks {
                 .properties(p -> p.mapColor(MapColor.METAL))
                 .transform(pickaxeOnly())
                 .transform(isPressurized())
-                .blockstate(BlockStateGen.axisBlockProvider(false))
+                .blockstate(BlockStateGen.directionalBlockProviderIgnoresWaterlogged(true))
 //                .onRegister(CreateRegistrate.blockModel(() -> BracketedKineticBlockModel::new))
                 .simpleItem()
                 .register();
