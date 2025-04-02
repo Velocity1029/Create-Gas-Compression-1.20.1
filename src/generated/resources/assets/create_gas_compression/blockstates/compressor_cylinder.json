@@ -1,5 +1,31 @@
 {
   "variants": {
+    "attached=down,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=down,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 90
+    },
+    "attached=down,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
+    },
+    "attached=down,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 180
+    },
+    "attached=down,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
+    },
+    "attached=down,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 270
+    },
     "attached=east,facing=down": {
       "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 180
@@ -74,6 +100,32 @@
       "model": "create_gas_compression:block/compressor_cylinder/block"
     },
     "attached=south,facing=west": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 270
+    },
+    "attached=up,facing=down": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 180
+    },
+    "attached=up,facing=east": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 90
+    },
+    "attached=up,facing=north": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90
+    },
+    "attached=up,facing=south": {
+      "model": "create_gas_compression:block/compressor_cylinder/block",
+      "x": 90,
+      "y": 180
+    },
+    "attached=up,facing=up": {
+      "model": "create_gas_compression:block/compressor_cylinder/block"
+    },
+    "attached=up,facing=west": {
       "model": "create_gas_compression:block/compressor_cylinder/block",
       "x": 90,
       "y": 270

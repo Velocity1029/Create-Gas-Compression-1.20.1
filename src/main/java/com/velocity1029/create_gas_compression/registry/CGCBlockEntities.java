@@ -1,6 +1,9 @@
 package com.velocity1029.create_gas_compression.registry;
 
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
+import com.simibubi.create.Create;
+import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
@@ -29,6 +32,11 @@ public class CGCBlockEntities {
     public static final BlockEntityEntry<IronPipeBlockEntity> IRON_PIPE = REGISTRATE
             .blockEntity("iron_pipe", IronPipeBlockEntity::new)
             .validBlocks(CGCBlocks.IRON_PIPE)
+            .register();
+
+    public static final BlockEntityEntry<IronPipeBlockEntity> ENCASED_IRON_PIPE = Create.REGISTRATE
+            .blockEntity("encased_iron_pipe", IronPipeBlockEntity::new)
+            .validBlocks(CGCBlocks.ENCASED_IRON_PIPE)
             .register();
 
     public static final BlockEntityEntry<IronTankBlockEntity> IRON_TANK = REGISTRATE

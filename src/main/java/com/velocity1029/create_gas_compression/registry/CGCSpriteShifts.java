@@ -1,4 +1,4 @@
-package com.velocity1029.create_gas_compression.base;
+package com.velocity1029.create_gas_compression.registry;
 
 import com.simibubi.create.foundation.block.connected.AllCTTypes;
 import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
@@ -11,6 +11,8 @@ public class CGCSpriteShifts {
             IRON_TANK = getCT(AllCTTypes.RECTANGLE, "fluid_tank"),
             IRON_TANK_TOP = getCT(AllCTTypes.RECTANGLE, "fluid_tank_top"),
             IRON_TANK_INNER = getCT(AllCTTypes.RECTANGLE, "fluid_tank_inner");
+
+    public static final CTSpriteShiftEntry IRON_CASING = omni("iron_casing");
 
 
     //////////////////////

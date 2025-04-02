@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create_gas_compression:block/iron_casing"
+    }
+  }
+}

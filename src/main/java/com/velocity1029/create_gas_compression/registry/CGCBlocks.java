@@ -8,19 +8,21 @@ import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 import static com.velocity1029.create_gas_compression.CreateGasCompression.REGISTRATE;
 import static com.velocity1029.create_gas_compression.registry.CGCTags.isPressurized;
 
-import com.simibubi.create.AllDisplaySources;
-import com.simibubi.create.AllMountedStorageTypes;
-import com.simibubi.create.AllTags;
+import com.simibubi.create.*;
 import com.simibubi.create.api.stress.BlockStressValues;
+import com.simibubi.create.content.decoration.encasing.CasingBlock;
+import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
+import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
+import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.content.fluids.tank.FluidTankMovementBehavior;
 import com.simibubi.create.foundation.data.*;
-import com.simibubi.create.infrastructure.config.CStress;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
+import com.velocity1029.create_gas_compression.blocks.pipes.EncasedIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeAttachmentModel;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlock;
@@ -28,7 +30,6 @@ import com.velocity1029.create_gas_compression.blocks.tanks.IronTankGenerator;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankItem;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankModel;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
@@ -51,6 +52,12 @@ public class CGCBlocks {
                     .transform(customItemModel())
                     .register();
 
+    public static final BlockEntry<CasingBlock> IRON_CASING = REGISTRATE.block("iron_casing", CasingBlock::new)
+            .properties(p -> p.mapColor(MapColor.COLOR_LIGHT_GRAY))
+            .transform(BuilderTransformers.casing(() -> CGCSpriteShifts.IRON_CASING))
+            .transform(pickaxeOnly())
+            .register();
+
     public static final BlockEntry<IronPipeBlock> IRON_PIPE =
             REGISTRATE.block("iron_pipe", IronPipeBlock::new)
                     .initialProperties(() -> Blocks.IRON_BLOCK)
@@ -61,6 +68,22 @@ public class CGCBlocks {
                     .onRegister( CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
                     .item()
                     .transform(customItemModel())
+                    .register();
+
+    public static final BlockEntry<EncasedIronPipeBlock> ENCASED_IRON_PIPE =
+            REGISTRATE.block("encased_iron_pipe", p -> new EncasedIronPipeBlock(p, CGCBlocks.IRON_CASING::get))
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .properties(p -> p.noOcclusion()
+                            .mapColor(MapColor.TERRACOTTA_LIGHT_GRAY))
+                    .transform(pickaxeOnly())
+                    .transform(isPressurized())
+                    .blockstate(BlockStateGen.encasedPipe())
+                    .onRegister(CreateRegistrate.connectedTextures(() -> new EncasedCTBehaviour(CGCSpriteShifts.IRON_CASING)))
+                    .onRegister(CreateRegistrate.casingConnectivity((block, cc) -> cc.make(block, CGCSpriteShifts.IRON_CASING,
+                            (s, f) -> !s.getValue(EncasedPipeBlock.FACING_TO_PROPERTY_MAP.get(f)))))
+                    .onRegister(CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
+                    .loot((p, b) -> p.dropOther(b, IRON_PIPE.get()))
+                    .transform(EncasingRegistry.addVariantTo(IRON_PIPE))
                     .register();
 
     public static final BlockEntry<IronTankBlock> IRON_TANK = REGISTRATE.block("iron_tank", IronTankBlock::regular)

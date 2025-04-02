@@ -1,6 +1,7 @@
 {
   "values": [
     "create_gas_compression:iron_pipe",
+    "create_gas_compression:encased_iron_pipe",
     "create_gas_compression:iron_tank",
     "create_gas_compression:compressor_cylinder"
   ]
