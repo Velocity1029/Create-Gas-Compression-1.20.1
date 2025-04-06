@@ -76,6 +76,7 @@ public class CreateGasCompression
         CGCPartialModels.register();
         CGCBlocks.register();
         CGCBlockEntities.register();
+        CGCItems.register();
         CGCFluids.register();
         CGCCreativeModeTabs.register(modEventBus);
 //        ModPaintings.register(bus);
