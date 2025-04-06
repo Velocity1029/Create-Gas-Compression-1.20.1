@@ -110,7 +110,7 @@ public class CGCTags {
 
     // FLUIDS
     public enum CGCFluidTags {
-        GAS,
+        GAS(NameSpace.FORGE),
         FLAMMABLE,
         NATURAL_GAS(NameSpace.FORGE),
 

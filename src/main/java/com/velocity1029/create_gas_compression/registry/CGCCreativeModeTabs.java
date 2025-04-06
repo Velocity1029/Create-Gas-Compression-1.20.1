@@ -10,7 +10,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
 public class CGCCreativeModeTabs {
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "create_power_loader" namespace
+    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "create_gas_compression" namespace
     private static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, CreateGasCompression.MODID);
     public static final RegistryObject<CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.create_gas_compression.main"))

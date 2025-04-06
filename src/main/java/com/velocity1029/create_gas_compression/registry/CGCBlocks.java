@@ -56,6 +56,7 @@ public class CGCBlocks {
             .properties(p -> p.mapColor(MapColor.COLOR_LIGHT_GRAY))
             .transform(BuilderTransformers.casing(() -> CGCSpriteShifts.IRON_CASING))
             .transform(pickaxeOnly())
+            .lang("Iron Casing")
             .register();
 
     public static final BlockEntry<IronPipeBlock> IRON_PIPE =
@@ -68,6 +69,7 @@ public class CGCBlocks {
                     .onRegister( CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
                     .item()
                     .transform(customItemModel())
+                    .lang("Iron Pipe")
                     .register();
 
     public static final BlockEntry<EncasedIronPipeBlock> ENCASED_IRON_PIPE =
@@ -84,6 +86,7 @@ public class CGCBlocks {
                     .onRegister(CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
                     .loot((p, b) -> p.dropOther(b, IRON_PIPE.get()))
                     .transform(EncasingRegistry.addVariantTo(IRON_PIPE))
+                    .lang("Encased Iron Pipe")
                     .register();
 
     public static final BlockEntry<IronTankBlock> IRON_TANK = REGISTRATE.block("iron_tank", IronTankBlock::regular)
@@ -101,6 +104,7 @@ public class CGCBlocks {
             .item(IronTankItem::new)
             .model(AssetLookup.customBlockItemModel("_", "block_single_window"))
             .build()
+            .lang("Iron Tank")
             .register();
 
     // Compressor
@@ -116,6 +120,7 @@ public class CGCBlocks {
             .item()
 //            .transform(customItemModel())
             .transform(ModelGen.customItemModel("compressor_frame", "item"))
+            .lang("Compressor Frame")
             .register();
 
     public static final BlockEntry<CompressorGuideBlock> COMPRESSOR_GUIDE =
@@ -123,10 +128,9 @@ public class CGCBlocks {
                     .initialProperties(() -> Blocks.IRON_BLOCK)
                     .transform(pickaxeOnly())
                     .blockstate((c, p) -> p.horizontalFaceBlock(c.get(), AssetLookup.partialBaseModel(c, p)))
-//                    .transform(CStress.setImpact(1024.0))
-//                    .onRegister(BlockStressValues.setGeneratorSpeed(64, true))
                     .item()
                     .transform(customItemModel())
+                    .lang("Compressor Guide")
                     .register();
 
     public static final BlockEntry<CompressorCylinderBlock> COMPRESSOR_CYLINDER =
@@ -136,8 +140,8 @@ public class CGCBlocks {
                 .transform(pickaxeOnly())
                 .transform(isPressurized())
                 .blockstate(BlockStateGen.directionalBlockProviderIgnoresWaterlogged(true))
-//                .onRegister(CreateRegistrate.blockModel(() -> BracketedKineticBlockModel::new))
                 .simpleItem()
+                .lang("Compressor Cylinder")
                 .register();
 
     // Load this class
