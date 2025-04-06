@@ -69,6 +69,7 @@ public class CreateGasCompression
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, CreateGasCompressionConfig.getCommonSpec());
         context.registerConfig(ModConfig.Type.CLIENT, CreateGasCompressionConfig.getClientSpec());
+        context.registerConfig(ModConfig.Type.SERVER, CreateGasCompressionConfig.getServerSpec());
 
         REGISTRATE.setCreativeTab(CGCCreativeModeTabs.MAIN);
 

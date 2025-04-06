@@ -1,33 +1,26 @@
 package com.velocity1029.create_gas_compression.blocks.compressors.cylinders;
 
-import com.simibubi.create.api.stress.BlockStressValues;
-import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.steamEngine.SteamEngineValueBox;
-import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
-import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
+import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
 import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -101,36 +94,20 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     }
 
     public void update(BlockPos sourcePos, float efficiency) {
-        BlockPos key = worldPosition.subtract(sourcePos);
-        guidePos = key;
-        float prev = compressorEfficiency;
+        guidePos = worldPosition.subtract(sourcePos);
         compressorEfficiency = efficiency;
-//        int prevDirection = this.movementDirection;
-//        if (Mth.equal(efficiency, prev)) //&& prevDirection == direction)
-//            return;
-
-//        setSpeed(efficiency);
 
         guideKey = level.getBlockState(sourcePos)
                 .getBlock();
         BlockEntity blockEntity = level.getBlockEntity(sourcePos);
         if (blockEntity instanceof CompressorGuideBlockEntity guideBlockEntity) {
-//            BlockEntity controller = level.getBlockEntity(guideBlockEntity.getFrame().getController());
             CompressorFrameBlockEntity frame = guideBlockEntity.getFrame();
             if (frame == null) {
                 if (hasSource()) removeSource();
             } else {
                 setSource(frame.getBlockPos());
             }
-//            if (controller instanceof CompressorFrameBlockEntity frameBlockEntity) {
-//                frameBlockEntity.getOrCreateNetwork().add(this);
-//
-//            }
         }
-//        this.movementDirection = direction; unnecessary
-//        // TODO make pump equivalent of updateGeneratedRotation in PoweredShaftBlockEntity
-//        updatepumpfluidspeeddirectionstuffandthings();
-//
     }
 
     public void remove(BlockPos sourcePos) {
@@ -139,26 +116,18 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
         guidePos = null;
         compressorEfficiency = 0;
-//        movementDirection = 0; unnecessary
         guideKey = null;
         removeSource();
-//        updatepumpfluidspeeddirectionstuffandthings();
     }
 
     public boolean canBePoweredBy(BlockPos globalPos) {
         return initialTicks == 0 && (guidePos == null || isPoweredBy(globalPos));
     }
 
-    public float getImpact() {
-        float impact = (float) BlockStressValues.getImpact(getStressConfigKey());
-        return impact;
-    }
-
     public boolean isPoweredBy(BlockPos globalPos) {
         BlockPos key = worldPosition.subtract(globalPos);
         return key.equals(guidePos);
     }
-
 
     protected boolean isFront(Direction side) {
         BlockState blockState = getBlockState();
@@ -169,7 +138,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return isFront;
     }
 
-
     @Nullable
     protected Direction getFront() {
         BlockState blockState = getBlockState();
@@ -178,7 +146,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return blockState.getValue(CompressorCylinderBlock.FACING);
     }
 
-
     public boolean isSideAccessible(Direction side) {
         BlockState blockState = getBlockState();
         if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
@@ -186,8 +153,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return blockState.getValue(CompressorCylinderBlock.FACING)
                 .getAxis() == side.getAxis();
     }
-
-
 
     @Override
     public void tick() {
@@ -275,7 +240,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
             List<Pair<Integer, BlockPos>> frontier = new ArrayList<>();
             Set<BlockPos> visited = new HashSet<>();
-            int maxDistance = FluidPropagator.getPumpRange();   //TODO higher max range for compressors
+            int maxDistance = CreateGasCompressionConfig.getServer().compressorCylinderRange.get();
             frontier.add(Pair.of(1, start.getConnectedPos()));
 
             while (!frontier.isEmpty()) {
@@ -363,47 +328,47 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
     }
 
-    protected boolean searchForEndpointRecursively(Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph,
-                                                   Set<BlockFace> targets, Map<Integer, Set<BlockFace>> validFaces, BlockFace currentFace, boolean pull) {
-        BlockPos currentPos = currentFace.getPos();
-        if (!pipeGraph.containsKey(currentPos))
-            return false;
-        Pair<Integer, Map<Direction, Boolean>> pair = pipeGraph.get(currentPos);
-        int distance = pair.getFirst();
-
-        boolean atLeastOneBranchSuccessful = false;
-        for (Direction nextFacing : Iterate.directions) {
-            if (nextFacing == currentFace.getFace())
-                continue;
-            Map<Direction, Boolean> map = pair.getSecond();
-            if (!map.containsKey(nextFacing))
-                continue;
-
-            BlockFace localTarget = new BlockFace(currentPos, nextFacing);
-            if (targets.contains(localTarget)) {
-                validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-                        .add(localTarget);
-                atLeastOneBranchSuccessful = true;
-                continue;
-            }
-
-            if (map.get(nextFacing) != pull)
-                continue;
-            if (!searchForEndpointRecursively(pipeGraph, targets, validFaces,
-                    new BlockFace(currentPos.relative(nextFacing), nextFacing.getOpposite()), pull))
-                continue;
-
-            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-                    .add(localTarget);
-            atLeastOneBranchSuccessful = true;
-        }
-
-        if (atLeastOneBranchSuccessful)
-            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-                    .add(currentFace);
-
-        return atLeastOneBranchSuccessful;
-    }
+//    protected boolean searchForEndpointRecursively(Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph,
+//                                                   Set<BlockFace> targets, Map<Integer, Set<BlockFace>> validFaces, BlockFace currentFace, boolean pull) {
+//        BlockPos currentPos = currentFace.getPos();
+//        if (!pipeGraph.containsKey(currentPos))
+//            return false;
+//        Pair<Integer, Map<Direction, Boolean>> pair = pipeGraph.get(currentPos);
+//        int distance = pair.getFirst();
+//
+//        boolean atLeastOneBranchSuccessful = false;
+//        for (Direction nextFacing : Iterate.directions) {
+//            if (nextFacing == currentFace.getFace())
+//                continue;
+//            Map<Direction, Boolean> map = pair.getSecond();
+//            if (!map.containsKey(nextFacing))
+//                continue;
+//
+//            BlockFace localTarget = new BlockFace(currentPos, nextFacing);
+//            if (targets.contains(localTarget)) {
+//                validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
+//                        .add(localTarget);
+//                atLeastOneBranchSuccessful = true;
+//                continue;
+//            }
+//
+//            if (map.get(nextFacing) != pull)
+//                continue;
+//            if (!searchForEndpointRecursively(pipeGraph, targets, validFaces,
+//                    new BlockFace(currentPos.relative(nextFacing), nextFacing.getOpposite()), pull))
+//                continue;
+//
+//            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
+//                    .add(localTarget);
+//            atLeastOneBranchSuccessful = true;
+//        }
+//
+//        if (atLeastOneBranchSuccessful)
+//            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
+//                    .add(currentFace);
+//
+//        return atLeastOneBranchSuccessful;
+//    }
 
     private boolean hasReachedValidEndpoint(LevelAccessor world, BlockFace blockFace, boolean pull) {
         BlockPos connectedPos = blockFace.getConnectedPos();
@@ -446,9 +411,9 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                 .setTrue();
     }
 
-    public boolean isPullingOnSide(boolean front) {
-        return !front;
-    }
+//    public boolean isPullingOnSide(boolean front) {
+//        return !front;
+//    }
 
     @Override
     public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {

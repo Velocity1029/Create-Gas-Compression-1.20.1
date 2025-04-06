@@ -1,6 +1,5 @@
 package com.velocity1029.create_gas_compression.config;
 
-import com.velocity1029.create_gas_compression.CreateGasCompression;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class CreateGasCompressionConfig {
@@ -8,8 +7,10 @@ public class CreateGasCompressionConfig {
 
     private final ClientConfig client;
     private final CommonConfig common;
+    private final ServerConfig server;
     private final ForgeConfigSpec clientSpec;
     private final ForgeConfigSpec commonSpec;
+    private final ForgeConfigSpec serverSpec;
 
     public CreateGasCompressionConfig() {
         var client = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
@@ -22,6 +23,10 @@ public class CreateGasCompressionConfig {
         this.commonSpec = common.getRight();
 //        ForgeConfigRegistry.INSTANCE.register(CreateGasCompression.MODID, ModConfig.Type.COMMON, common.getRight());
 
+        var server = new ForgeConfigSpec.Builder().configure(ServerConfig::new);
+        this.server = server.getLeft();
+        this.serverSpec = server.getRight();
+
 
     }
 
@@ -33,12 +38,20 @@ public class CreateGasCompressionConfig {
         return INSTANCE.commonSpec;
     }
 
+    public static ForgeConfigSpec getServerSpec() {
+        return INSTANCE.serverSpec;
+    }
+
     public static ClientConfig getClient() {
         return INSTANCE.client;
     }
 
     public static CommonConfig getCommon() {
         return INSTANCE.common;
+    }
+
+    public static ServerConfig getServer() {
+        return INSTANCE.server;
     }
 
 }
