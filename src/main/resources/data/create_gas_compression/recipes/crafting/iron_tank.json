@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:plates/iron"
+    },
+    "C": {
+      "item": "create:fluid_tank"
+    }
+  },
+  "pattern": [
+    "B",
+    "C",
+    "B"
+  ],
+  "result": {
+    "item": "create_gas_compression:iron_tank"
+  },
+  "show_notification": true
+}
