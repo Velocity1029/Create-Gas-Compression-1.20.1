@@ -1,4 +1,7 @@
 {
+  "create_gas_compression.generic.unit.pressure": "Pressure",
+  "create_gas_compression.gui.goggles.fluid_hot": "HOT",
+  "create_gas_compression.gui.goggles.fluid_cool": "Cool",
   "itemGroup.create_gas_compression.main": "Create: Gas Compression",
   "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine",
   "block.create_gas_compression.compressor_frame": "Compressor Frame",

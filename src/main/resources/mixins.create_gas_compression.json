@@ -5,6 +5,7 @@
   "refmap": "create_gas_compression.mixin-refmap.json",
   "mixins": [
     "FluidPropagatorMixin",
-    "FluidPipeBlockMixin"
+    "FluidPipeBlockMixin",
+    "IHaveGoggleInformationMixin"
   ]
 }
