@@ -8,12 +8,11 @@ import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.fluid.SmartFluidTank;
-import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
+import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.createmod.catnip.data.Couple;
 import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.math.BlockFace;
@@ -42,55 +41,25 @@ import java.util.*;
 public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
     // Fluid Handling
-//    protected LazyOptional<IFluidHandler> fluidCapability;
-    protected FluidTank tankInput;
-    protected FluidTank tankOutput;
+    protected FluidTank tank;
 
     Couple<MutableBoolean> sidesToUpdate;
     boolean pressureUpdate;
 
-    // Backcompat- flips any pump blockstate that loads with reversed=true
-    boolean scheduleFlip;
-
     public BlockPos guidePos;
     public float compressorEfficiency;
-//    public int movementDirection;
     public int initialTicks;
     public static Block guideKey;
 
     public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
-        createFluidTanks();
+        tank = new CompressorTank();
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
         behaviours.add(new CompressorFluidTransferBehaviour(this));
-    }
-
-    protected void createFluidTanks() {
-        tankInput = new SmartFluidTank(getCapacityMultiplier(), this::onFluidStackChangedInput);
-        tankOutput = new SmartFluidTank(getCapacityMultiplier(), (b) -> {});
-    }
-
-    protected void onFluidStackChangedInput(FluidStack newFluidStack) {
-        if (newFluidStack != null && !newFluidStack.isEmpty()) {
-            int fluidAmount = newFluidStack.getAmount();
-            FluidStack outputFluid = pressurizeFluid(newFluidStack);
-            int remainingAmount = fluidAmount - (tankOutput.fill(outputFluid, IFluidHandler.FluidAction.EXECUTE) * 2);
-            newFluidStack.setAmount(remainingAmount);
-        }
-    }
-
-    protected FluidStack pressurizeFluid(FluidStack fluid) {
-        FluidStack outputFluid = fluid.copy();
-        outputFluid.setAmount(outputFluid.getAmount() / 2);
-        CompoundTag outputTags = outputFluid.getOrCreateTag();
-        float pressure = outputTags.contains("Pressure", Tag.TAG_FLOAT) ? outputTags.getFloat("Pressure") : 1;
-        outputTags.putFloat("Pressure", pressure * 2f);
-        outputTags.putBoolean("Hot", true);
-        return outputFluid;
     }
 
     public void update(BlockPos sourcePos, float efficiency) {
@@ -134,8 +103,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
             return false;
         Direction front = blockState.getValue(CompressorCylinderBlock.FACING);
-        boolean isFront = side == front;
-        return isFront;
+        return side == front;
     }
 
     @Nullable
@@ -161,13 +129,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         if (level.isClientSide && !isVirtual())
             return;
 
-        if (scheduleFlip) {
-            level.setBlockAndUpdate(worldPosition,
-                    getBlockState().setValue(PumpBlock.FACING, getBlockState().getValue(PumpBlock.FACING)
-                            .getOpposite()));
-            scheduleFlip = false;
-        }
-
         sidesToUpdate.forEachWithContext((update, isFront) -> {
             if (update.isFalse())
                 return;
@@ -182,8 +143,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
         if (Math.abs(previousSpeed) == Math.abs(getSpeed()))
             return;
-//        if (speed != 0)
-//            award(AllAdvancements.PUMP);
         if (level.isClientSide && !isVirtual())
             return;
 
@@ -206,15 +165,13 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {
         super.read(compound, clientPacket);
-        tankInput.readFromNBT(compound.getCompound("TankInput"));
-        tankOutput.readFromNBT(compound.getCompound("TankOutput"));
+        tank.readFromNBT(compound.getCompound("Tank"));
     }
 
     @Override
     protected void write(CompoundTag compound, boolean clientPacket) {
         super.write(compound, clientPacket);
-        compound.put("TankInput", tankInput.writeToNBT(new CompoundTag()));
-        compound.put("TankOutput", tankOutput.writeToNBT(new CompoundTag()));
+        compound.put("Tank", tank.writeToNBT(new CompoundTag()));
     }
 
     protected void distributePressureTo(Direction side) {
@@ -328,48 +285,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
     }
 
-//    protected boolean searchForEndpointRecursively(Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph,
-//                                                   Set<BlockFace> targets, Map<Integer, Set<BlockFace>> validFaces, BlockFace currentFace, boolean pull) {
-//        BlockPos currentPos = currentFace.getPos();
-//        if (!pipeGraph.containsKey(currentPos))
-//            return false;
-//        Pair<Integer, Map<Direction, Boolean>> pair = pipeGraph.get(currentPos);
-//        int distance = pair.getFirst();
-//
-//        boolean atLeastOneBranchSuccessful = false;
-//        for (Direction nextFacing : Iterate.directions) {
-//            if (nextFacing == currentFace.getFace())
-//                continue;
-//            Map<Direction, Boolean> map = pair.getSecond();
-//            if (!map.containsKey(nextFacing))
-//                continue;
-//
-//            BlockFace localTarget = new BlockFace(currentPos, nextFacing);
-//            if (targets.contains(localTarget)) {
-//                validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-//                        .add(localTarget);
-//                atLeastOneBranchSuccessful = true;
-//                continue;
-//            }
-//
-//            if (map.get(nextFacing) != pull)
-//                continue;
-//            if (!searchForEndpointRecursively(pipeGraph, targets, validFaces,
-//                    new BlockFace(currentPos.relative(nextFacing), nextFacing.getOpposite()), pull))
-//                continue;
-//
-//            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-//                    .add(localTarget);
-//            atLeastOneBranchSuccessful = true;
-//        }
-//
-//        if (atLeastOneBranchSuccessful)
-//            validFaces.computeIfAbsent(distance, $ -> new HashSet<>())
-//                    .add(currentFace);
-//
-//        return atLeastOneBranchSuccessful;
-//    }
-
     private boolean hasReachedValidEndpoint(LevelAccessor world, BlockFace blockFace, boolean pull) {
         BlockPos connectedPos = blockFace.getConnectedPos();
         BlockState connectedState = world.getBlockState(connectedPos);
@@ -411,10 +326,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                 .setTrue();
     }
 
-//    public boolean isPullingOnSide(boolean front) {
-//        return !front;
-//    }
-
     @Override
     public boolean isCustomConnection(KineticBlockEntity other, BlockState state, BlockState otherState) {
         if (other instanceof CompressorGuideBlockEntity guideTarget) {
@@ -428,15 +339,8 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.FLUID_HANDLER)
-            if (side != getFront())
-                return LazyOptional.of(() -> tankInput).cast();
-            else
-                return LazyOptional.of(() -> tankOutput).cast();
+            return LazyOptional.of(() -> tank).cast();
         return super.getCapability(cap, side);
-    }
-
-    public static int getCapacityMultiplier() {
-        return AllConfigs.server().fluids.fluidTankCapacity.get() * 1000;
     }
 
     class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour {
@@ -471,17 +375,43 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                 return AttachmentTypes.NONE;
             return attachment;
         }
+    }
 
-//        @Override
-//        public FluidStack getProvidedOutwardFluid(Direction side) {
-//            FluidStack fluid = super.getProvidedOutwardFluid(side).copy();
-//            if (fluid == null || fluid.isEmpty()) return fluid;
-//            CompoundTag fluidTag = fluid.getOrCreateTag();
-//            float pressure = fluidTag.contains("Pressure", Tag.TAG_FLOAT) ? fluidTag.getFloat("Pressure") : 1;
-//            fluid.getTag().putFloat("Pressure", pressure * 2);
-//            fluid.getTag().putBoolean("Hot", true);
-////            fluid.setAmount(fluid.getAmount() / 2);
-//            return fluid;
-//        }
+    private static class CompressorTank extends FluidTank {
+
+        public CompressorTank() {
+            super(0, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
+            && (!e.hasTag() || !e.getTag().getBoolean("Hot"))); // Is Fluid not already hot ?
+        }
+
+        @Override
+        public int fill(FluidStack resource, FluidAction action) {
+            if (!resource.isEmpty() && this.isFluidValid(resource)) {
+                if (action.simulate()) {
+                    if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
+                        return resource.getAmount();
+                    } else {
+                        return 0;
+                    }
+                } else if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
+                    this.fluid = pressurizeFluid(resource.copy());
+                    this.onContentsChanged();
+                    return resource.getAmount(); //this.fluid.getAmount(); // TODO return which one is more appropriate
+                } else {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+
+        protected FluidStack pressurizeFluid(FluidStack fluid) {
+            fluid.setAmount(fluid.getAmount() / 2);
+            CompoundTag tags = fluid.getOrCreateTag();
+            float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
+            tags.putFloat("Pressure", pressure * 2f);
+            tags.putBoolean("Hot", true);
+            return fluid;
+        }
     }
 }
