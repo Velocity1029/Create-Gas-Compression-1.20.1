@@ -6,6 +6,7 @@ import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
 import com.simibubi.create.content.fluids.pipes.VanillaFluidTargets;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.velocity1029.create_gas_compression.blocks.heat_exchanger.CompressedGasCoolerBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.LockablePipeBlockEntity;
 import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
@@ -78,7 +79,8 @@ public class FluidPipeBlockMixin {
     @Overwrite(remap = false)
     public static boolean canConnectTo(BlockAndTintGetter world, BlockPos neighbourPos, BlockState neighbour,
                                        Direction direction) {
-        if (FluidPropagator.hasFluidCapability(world, neighbourPos, direction.getOpposite()))
+        // Additional check for gas cooler case as it has a virtual fluid tank but should not connect based on its transport behavior
+        if (FluidPropagator.hasFluidCapability(world, neighbourPos, direction.getOpposite()) && !(neighbour.getBlock() instanceof CompressedGasCoolerBlock))
             return true;
         if (VanillaFluidTargets.canProvideFluidWithoutCapability(neighbour))
             return true;

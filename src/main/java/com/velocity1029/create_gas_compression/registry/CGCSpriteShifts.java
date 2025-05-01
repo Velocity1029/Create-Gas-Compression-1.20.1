@@ -14,6 +14,8 @@ public class CGCSpriteShifts {
 
     public static final CTSpriteShiftEntry IRON_CASING = omni("iron_casing");
 
+    public static final CTSpriteShiftEntry HEAT_EXCHANGER = omni("heat_exchanger");
+
 
     //////////////////////
     public static CTSpriteShiftEntry omni(String name) {

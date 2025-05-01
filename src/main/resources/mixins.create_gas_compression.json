@@ -4,8 +4,9 @@
   "package": "com.velocity1029.create_gas_compression.mixins",
   "refmap": "create_gas_compression.mixin-refmap.json",
   "mixins": [
-    "FluidPropagatorMixin",
+    "AirCurrentMixin",
     "FluidPipeBlockMixin",
+    "FluidPropagatorMixin",
     "IHaveGoggleInformationMixin"
   ]
 }

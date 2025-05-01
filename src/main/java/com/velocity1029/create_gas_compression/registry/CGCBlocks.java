@@ -22,6 +22,7 @@ import com.velocity1029.create_gas_compression.blocks.compressors.frames.Compres
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
+import com.velocity1029.create_gas_compression.blocks.heat_exchanger.CompressedGasCoolerBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.EncasedIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeAttachmentModel;
@@ -135,14 +136,49 @@ public class CGCBlocks {
 
     public static final BlockEntry<CompressorCylinderBlock> COMPRESSOR_CYLINDER =
             REGISTRATE.block("compressor_cylinder", CompressorCylinderBlock::new)
-                .initialProperties(() -> Blocks.IRON_BLOCK)
-                .properties(p -> p.mapColor(MapColor.METAL))
-                .transform(pickaxeOnly())
-                .transform(isPressurized())
-                .blockstate(BlockStateGen.directionalBlockProviderIgnoresWaterlogged(true))
-                .simpleItem()
-                .lang("Compressor Cylinder")
-                .register();
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .properties(p -> p.mapColor(MapColor.METAL))
+                    .transform(pickaxeOnly())
+                    .transform(isPressurized())
+                    .blockstate(BlockStateGen.directionalBlockProviderIgnoresWaterlogged(true))
+                    .simpleItem()
+                    .lang("Compressor Cylinder")
+                    .register();
+
+    public static final BlockEntry<CasingBlock> HEAT_EXCHANGER = REGISTRATE.block("heat_exchanger", CasingBlock::new)
+            .properties(p -> p.mapColor(MapColor.METAL))
+            .transform(BuilderTransformers.casing(() -> CGCSpriteShifts.HEAT_EXCHANGER))
+            .transform(pickaxeOnly())
+            .lang("Heat Exchanger")
+            .register();
+
+    public static final BlockEntry<CompressedGasCoolerBlock> COMPRESSED_GAS_COOLER =
+
+            REGISTRATE.block("compressed_gas_cooler", p -> new CompressedGasCoolerBlock(p, CGCBlocks.HEAT_EXCHANGER::get))
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .properties(p -> p.noOcclusion()
+                            .mapColor(MapColor.METAL))
+                    .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
+                    .transform(pickaxeOnly())
+                    .transform(isPressurized())
+                    .blockstate(BlockStateGen.encasedPipe())
+                    .onRegister(CreateRegistrate.connectedTextures(() -> new EncasedCTBehaviour(CGCSpriteShifts.HEAT_EXCHANGER)))
+                    .onRegister(CreateRegistrate.casingConnectivity((block, cc) -> cc.make(block, CGCSpriteShifts.HEAT_EXCHANGER,
+                            (s, f) -> !s.getValue(EncasedPipeBlock.FACING_TO_PROPERTY_MAP.get(f)))))
+                    .onRegister(CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
+                    .loot((p, b) -> {p.dropSelf(b); p.dropOther(b, IRON_PIPE.get());})
+                    .transform(EncasingRegistry.addVariantTo(IRON_PIPE))
+                    .lang("Compressed Gas Cooler")
+                    .register();
+//            REGISTRATE.block("heat_exchanger", HeatExchangerBlock::new)
+//                    .initialProperties(() -> Blocks.IRON_BLOCK)
+//                    .properties(p -> p.mapColor(MapColor.METAL))
+//                    .transform(pickaxeOnly())
+//                    .transform(isPressurized())
+//                    .blockstate(BlockStateGen.encasedPipe())
+//                    .simpleItem()
+//                    .lang("Compressor Cylinder")
+//                    .register();
 
     // Load this class
 
