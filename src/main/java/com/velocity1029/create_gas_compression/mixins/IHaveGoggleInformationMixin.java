@@ -19,7 +19,7 @@ import java.util.Optional;
 public interface IHaveGoggleInformationMixin {
     /**
      * @author Velocity1029
-     * @reason Won't let any other pump blocks be discovered besides Create's MECHANICAL_PUMP because of the BlockEntry check
+     * @reason Pressure tooltips
      */
     @Overwrite( remap = false)
     default boolean containedFluidTooltip(List<Component> tooltip, boolean isPlayerSneaking,
