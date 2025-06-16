@@ -163,7 +163,7 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
 		if (world.isClientSide) {
 			connections.forEach(connection -> {
-                visualizePressure(connection, pos);
+//                visualizePressure(connection, pos);
 //				connection.visualizeFlow(pos);
 //				connection.visualizePressure(pos);
 			});
