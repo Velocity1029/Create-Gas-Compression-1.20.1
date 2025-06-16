@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -60,6 +61,12 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
         behaviours.add(new CompressorFluidTransferBehaviour(this));
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return super.addToGoggleTooltip(tooltip, isPlayerSneaking ) &&
+                containedFluidTooltip(tooltip, isPlayerSneaking, getCapability(ForgeCapabilities.FLUID_HANDLER));
     }
 
     public void update(BlockPos sourcePos, float efficiency) {
@@ -380,12 +387,45 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
     private static class CompressorTank extends FluidTank {
 
         public CompressorTank() {
-            super(0, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
+            super(1000, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
             && (!e.hasTag() || !e.getTag().getBoolean("Hot"))); // Is Fluid not already hot ?
         }
 
         @Override
-        public int fill(FluidStack resource, FluidAction action) {
+        public int fill(FluidStack fluid, FluidAction action) {
+            FluidStack resource = pressurizeFluid(fluid.copy());
+//            return super.fill(fluid, action);
+//            if (!resource.isEmpty() && this.isFluidValid(resource)) {
+//                if (action.simulate()) {
+//                    if (this.fluid.isEmpty()) {
+//                        return Math.min(this.capacity, resource.getAmount());
+//                    } else {
+//                        return !this.fluid.isFluidEqual(resource) ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
+//                    }
+//                } else if (this.fluid.isEmpty()) {
+//                    this.fluid = new FluidStack(resource, Math.min(this.capacity, resource.getAmount()));
+//                    this.onContentsChanged();
+//                    return this.fluid.getAmount();
+//                } else if (!this.fluid.isFluidEqual(resource)) {
+//                    return 0;
+//                } else {
+//                    int filled = this.capacity - this.fluid.getAmount();
+//                    if (resource.getAmount() < filled) {
+//                        this.fluid.grow(resource.getAmount());
+//                        filled = resource.getAmount();
+//                    } else {
+//                        this.fluid.setAmount(this.capacity);
+//                    }
+//
+//                    if (filled > 0) {
+//                        this.onContentsChanged();
+//                    }
+//
+//                    return filled;
+//                }
+//            } else {
+//                return 0;
+//            }
             if (!resource.isEmpty() && this.isFluidValid(resource)) {
                 if (action.simulate()) {
                     if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {

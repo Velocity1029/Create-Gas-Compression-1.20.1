@@ -1,5 +1,6 @@
 package com.velocity1029.create_gas_compression.blocks.heat_exchanger;
 
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
@@ -11,12 +12,15 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.IFannable;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -29,7 +33,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity implements IFannable {
+public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity implements IHaveGoggleInformation, IFannable {
 
     // Fluid Handling
     private final CoolingTank tank;
@@ -38,6 +42,7 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
     public CompressedGasCoolerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         tank = new CoolingTank();
+        return;
     }
 
     @Override
@@ -45,6 +50,12 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         behaviours.add(new StandardPipeFluidTransportBehaviour(this));
 
         registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return containedFluidTooltip(tooltip, isPlayerSneaking,
+                getCapability(ForgeCapabilities.FLUID_HANDLER));
     }
 
     @Nonnull
@@ -78,28 +89,34 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         public boolean shouldCool;
 
         public CoolingTank() {
-            super(0);
+            super(1000);
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (!resource.isEmpty() && this.isFluidValid(resource)) {
-                if (action.simulate()) {
-                    if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                        return resource.getAmount();
-                    } else {
-                        return 0;
-                    }
-                } else if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                    this.fluid = shouldCool ? coolFluid(resource.copy()) : resource;
-                    this.onContentsChanged();
-                    return this.fluid.getAmount();
-                } else {
-                    return 0;
-                }
-            } else {
-                return 0;
-            }
+            FluidStack fluid = shouldCool ? coolFluid(resource.copy()) : resource;
+            return super.fill(fluid, action);
+//            if (!fluid.isEmpty() && this.isFluidValid(fluid)) {
+//                if (action.simulate()) {
+//                    if (this.fluid.isEmpty()) {
+//                        return fluid.getAmount();
+//                    } else {
+//                        return !this.fluid.isFluidEqual(fluid) ? 0 : getFluidAmount() + fluid.getAmount();
+//                    }
+//                } else if (this.fluid.isEmpty()) {
+//                    this.fluid = fluid;
+//                    this.onContentsChanged();
+//                    return this.fluid.getAmount();
+//                } else if (!this.fluid.isFluidEqual(fluid)) {
+//                    return 0;
+//                } else {
+//                    this.fluid.grow(fluid.getAmount());
+//                    this.onContentsChanged();
+//                    return fluid.getAmount();
+//                }
+//            } else {
+//                return 0;
+//            }
         }
 
         protected FluidStack coolFluid(FluidStack fluid) {

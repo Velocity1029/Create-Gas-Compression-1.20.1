@@ -74,14 +74,11 @@ public class FluidPipeBlockMixin {
 
     /**
      * @author Velocity1029
-     * @reason Lockable pipes
+     * @reason Allow fluid holders to only connect based on transport behaviour if present
      */
     @Overwrite(remap = false)
     public static boolean canConnectTo(BlockAndTintGetter world, BlockPos neighbourPos, BlockState neighbour,
                                        Direction direction) {
-        // Additional check for gas cooler case as it has a virtual fluid tank but should not connect based on its transport behavior
-        if (FluidPropagator.hasFluidCapability(world, neighbourPos, direction.getOpposite()) && !(neighbour.getBlock() instanceof CompressedGasCoolerBlock))
-            return true;
         if (VanillaFluidTargets.canProvideFluidWithoutCapability(neighbour))
             return true;
         FluidTransportBehaviour transport = BlockEntityBehaviour.get(world, neighbourPos, FluidTransportBehaviour.TYPE);
@@ -93,8 +90,10 @@ public class FluidPipeBlockMixin {
                     && (!(world.getBlockEntity(neighbourPos) instanceof LockablePipeBlockEntity lockablePipeBlockEntity)
                     || !lockablePipeBlockEntity.locked
                     || neighbour.getValue(PROPERTY_BY_DIRECTION.get(direction.getOpposite())));
-        if (transport == null)
-            return false;
-        return transport.canHaveFlowToward(neighbour, direction.getOpposite());
+        if (transport != null)
+            return transport.canHaveFlowToward(neighbour, direction.getOpposite());
+        // Moved tank check after transport check so that blocks that convert fluids can have a virtual tank and still connect according to their canHaveFlowToward method
+        // i.e. compressed gas cooler and compressor cylinder (
+        return FluidPropagator.hasFluidCapability(world, neighbourPos, direction.getOpposite());
     }
 }
