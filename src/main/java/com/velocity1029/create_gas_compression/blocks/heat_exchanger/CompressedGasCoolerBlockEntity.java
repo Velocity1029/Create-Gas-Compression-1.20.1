@@ -10,12 +10,9 @@ import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.IFannable;
-import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
-import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,7 +39,7 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        behaviours.add(new StandardPipeFluidTransportBehaviour(this));
+        behaviours.add(new CoolerFluidTransportBehaviour(this));
 
         registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
     }
@@ -111,10 +108,24 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         }
     }
 
-    class StandardPipeFluidTransportBehaviour extends FluidTransportBehaviour {
+    class CoolerFluidTransportBehaviour extends FluidTransportBehaviour {
 
-        public StandardPipeFluidTransportBehaviour(SmartBlockEntity be) {
+        public CoolerFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
+        }
+
+        @Override
+        public FluidStack getProvidedOutwardFluid(Direction side) {
+            FluidStack superFluid = super.getProvidedOutwardFluid(side);
+            return coolFluid(superFluid);
+        }
+
+        protected FluidStack coolFluid(FluidStack fluid) {
+            if (!fluid.hasTag()) return fluid;
+            CompoundTag tags = fluid.getTag();
+            boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
+            tags.putBoolean("Hot", false);
+            return fluid;
         }
 
         @Override
