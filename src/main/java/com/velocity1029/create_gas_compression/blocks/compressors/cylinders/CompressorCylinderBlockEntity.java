@@ -351,6 +351,22 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         }
 
         @Override
+        public FluidStack getProvidedOutwardFluid(Direction side) {
+            FluidStack superFluid = super.getProvidedOutwardFluid(side);
+            return pressurizeFluid(superFluid);
+        }
+
+        protected FluidStack pressurizeFluid(FluidStack fluid) {
+            if (fluid.isEmpty() ) return fluid;
+            fluid.setAmount(fluid.getAmount() / 2);
+            CompoundTag tags = fluid.getOrCreateTag();
+            float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
+            tags.putFloat("Pressure", pressure * 2f);
+            tags.putBoolean("Hot", true);
+            return fluid;
+        }
+
+        @Override
         public void tick() {
             super.tick();
             if (interfaces == null) return;
