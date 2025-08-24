@@ -10,6 +10,7 @@ import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
@@ -30,6 +31,8 @@ import net.minecraftforge.fluids.FluidStack;
 import org.joml.Vector3d;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Predicate;
 
 public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
@@ -163,7 +166,7 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
 		if (world.isClientSide) {
 			connections.forEach(connection -> {
-//                visualizePressure(connection, pos);
+                visualizePressure(connection, pos);
 //				connection.visualizeFlow(pos);
 //				connection.visualizePressure(pos);
 			});
@@ -217,25 +220,36 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
             }
 
             boolean sendUpdate = false;
+
+            HashMap<BlockPos, Float> explosions = new HashMap<>();
             for (PipeConnection connection : connections) {
                 FluidStack internalFluid = singleSource != connection ? availableFlow : FluidStack.EMPTY;
 
                 // Pressure explosion functionality
                 CompoundTag fluidTags = internalFluid.getTag();
-                if (fluidTags != null && fluidTags.contains("Pressure", Tag.TAG_FLOAT) && fluidTags.getInt("Pressure") > 0) {
+                if (fluidTags != null && fluidTags.contains("Pressure", Tag.TAG_FLOAT) && fluidTags.getFloat("Pressure") > 1) {
                     // If the connected block isn't pressurized
-                    BlockPos connectedPos = pos.relative(connection.side);
-                    BlockState connectedBlock = world.getBlockState(connectedPos);
-                    if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
-                        // Burst!
-                        float strength = fluidTags.getInt("Pressure");
-                        world.explode(null, connectedPos.getX(), connectedPos.getY(), connectedPos.getZ(), strength, Level.ExplosionInteraction.BLOCK);
+                    // Catch for diffuser to not blow connected pipes up when properly diffusing
+                    boolean diffused = (world.getBlockEntity(pos) instanceof DiffuserBlockEntity &&
+                            FluidPropagator.getPipeConnections(world.getBlockState(pos), FluidPropagator.getPipe(world, pos)).size() - 1 >= fluidTags.getFloat("Pressure"));
+                    if (!diffused) {
+                        BlockPos connectedPos = pos.relative(connection.side);
+                        BlockState connectedBlock = world.getBlockState(connectedPos);
+                        if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
+                            // Burst!
+                            float strength = fluidTags.getFloat("Pressure");
+                            explosions.put(connectedPos, strength);
+                        }
                     }
 
                 }
                 Predicate<FluidStack> extractionPredicate =
                         extracted -> canPullFluidFrom(extracted, blockEntity.getBlockState(), connection.side);
                 sendUpdate |= connection.manageFlows(world, pos, internalFluid, extractionPredicate);
+            }
+
+            for (BlockPos position : explosions.keySet()) {
+                world.explode(null, position.getX(), position.getY(), position.getZ(), explosions.get(position), Level.ExplosionInteraction.BLOCK);
             }
 
             if (sendUpdate)
