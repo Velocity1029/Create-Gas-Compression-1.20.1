@@ -68,43 +68,57 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         float speed = airCurrent.source.getSpeed();
         tank.shouldCool = true;
         coolCounter = 5;
-        tank.coolFluid(tank.getFluid());
+        coolFluid(tank.getFluid());
+    }
+
+    protected static FluidStack coolFluid(FluidStack fluid) {
+        if (fluid.isEmpty() || !fluid.hasTag()) return fluid;
+        CompoundTag tags = fluid.getTag();
+        boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
+        tags.putBoolean("Hot", false);
+        return fluid;
     }
 
     private static class CoolingTank extends FluidTank {
         public boolean shouldCool;
 
         public CoolingTank() {
-            super(0);
+            super(1000);
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
             if (!resource.isEmpty() && this.isFluidValid(resource)) {
                 if (action.simulate()) {
-                    if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                        return resource.getAmount();
+                    if (this.fluid.isEmpty()) {
+                        return Math.min(this.capacity, resource.getAmount());
                     } else {
-                        return 0;
+                        return this.fluid.getFluid() != resource.getFluid() ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
                     }
-                } else if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                    this.fluid = shouldCool ? coolFluid(resource.copy()) : resource;
+                } else if (this.fluid.isEmpty()) {
+                    this.fluid = coolFluid(new FluidStack(resource, Math.min(this.capacity, resource.getAmount())));
                     this.onContentsChanged();
                     return this.fluid.getAmount();
-                } else {
+                } else if (this.fluid.getFluid() != resource.getFluid()) {
                     return 0;
+                } else {
+                    int filled = this.capacity - this.fluid.getAmount();
+                    if (resource.getAmount() < filled) {
+                        this.fluid.grow(resource.getAmount());
+                        filled = resource.getAmount();
+                    } else {
+                        this.fluid.setAmount(this.capacity);
+                    }
+
+                    if (filled > 0) {
+                        this.onContentsChanged();
+                    }
+
+                    return filled;
                 }
             } else {
                 return 0;
             }
-        }
-
-        protected FluidStack coolFluid(FluidStack fluid) {
-            if (!fluid.hasTag()) return fluid;
-            CompoundTag tags = fluid.getTag();
-            boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
-            tags.putBoolean("Hot", false);
-            return fluid;
         }
     }
 
@@ -118,14 +132,6 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         public FluidStack getProvidedOutwardFluid(Direction side) {
             FluidStack superFluid = super.getProvidedOutwardFluid(side);
             return coolFluid(superFluid);
-        }
-
-        protected FluidStack coolFluid(FluidStack fluid) {
-            if (!fluid.hasTag()) return fluid;
-            CompoundTag tags = fluid.getTag();
-            boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
-            tags.putBoolean("Hot", false);
-            return fluid;
         }
 
         @Override

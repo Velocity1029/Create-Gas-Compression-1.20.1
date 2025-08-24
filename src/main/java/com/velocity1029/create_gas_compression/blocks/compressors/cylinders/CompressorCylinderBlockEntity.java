@@ -11,7 +11,10 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
 import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
+import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.createmod.catnip.data.Couple;
 import net.createmod.catnip.data.Pair;
@@ -20,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -181,6 +185,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         BlockFace start = new BlockFace(worldPosition, side);
         boolean pull = isPullingOnSide(isFront(side));
         Set<BlockFace> targets = new HashSet<>();
+        Map<BlockPos, Integer> diffusedPipes = new HashMap<>();
         Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph = new HashMap<>();
 
         if (!pull)
@@ -215,6 +220,16 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                 if (pipe == null)
                     continue;
 
+                boolean diffusedConnection = false;
+                int diffusionRatio = 1;
+                if (diffusedPipes.containsKey(currentPos)) {
+                    diffusionRatio *= diffusedPipes.get(currentPos);
+                    diffusedConnection = true;
+                }
+                if (level.getBlockEntity(currentPos) instanceof DiffuserBlockEntity) {
+                    diffusionRatio *= FluidPropagator.getPipeConnections(currentState, pipe).size() - 1;
+                    diffusedConnection = true;
+                }
                 for (Direction face : FluidPropagator.getPipeConnections(currentState, pipe)) {
                     BlockFace blockFace = new BlockFace(currentPos, face);
                     BlockPos connectedPos = blockFace.getConnectedPos();
@@ -253,6 +268,9 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                             .getSecond()
                             .put(face.getOpposite(), !pull);
                     frontier.add(Pair.of(distance + 1, connectedPos));
+                    if (diffusedConnection) {
+                        diffusedPipes.put(connectedPos, diffusionRatio);
+                    }
                 }
             }
         }
@@ -278,8 +296,11 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
                 FluidTransportBehaviour pipeBehaviour = FluidPropagator.getPipe(level, pipePos);
                 if (pipeBehaviour == null)
                     continue;
-
-                pipeBehaviour.addPressure(pipeSide, inbound, pressure / parallelBranches);
+                float correctedPressure = pull? pressure : pressure / 2;
+                if (diffusedPipes.containsKey(pipePos)) {
+                    correctedPressure *= diffusedPipes.get(pipePos);
+                }
+                pipeBehaviour.addPressure(pipeSide, inbound, correctedPressure / parallelBranches);
             }
         }
 
@@ -335,12 +356,28 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return false;
     }
 
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return containedFluidTooltip(tooltip, isPlayerSneaking,
+                getCapability(ForgeCapabilities.FLUID_HANDLER));
+    }
+
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.FLUID_HANDLER)
             return LazyOptional.of(() -> tank).cast();
         return super.getCapability(cap, side);
+    }
+
+    protected static FluidStack pressurizeFluid(FluidStack fluid) {
+        if (fluid.isEmpty() ) return fluid;
+        fluid.setAmount(fluid.getAmount() / 2);
+        CompoundTag tags = fluid.getOrCreateTag();
+        float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
+        tags.putFloat("Pressure", pressure * 2f);
+        tags.putBoolean("Hot", true);
+        return fluid;
     }
 
     class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour {
@@ -354,16 +391,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         public FluidStack getProvidedOutwardFluid(Direction side) {
             FluidStack superFluid = super.getProvidedOutwardFluid(side);
             return pressurizeFluid(superFluid);
-        }
-
-        protected FluidStack pressurizeFluid(FluidStack fluid) {
-            if (fluid.isEmpty() ) return fluid;
-            fluid.setAmount(fluid.getAmount() / 2);
-            CompoundTag tags = fluid.getOrCreateTag();
-            float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
-            tags.putFloat("Pressure", pressure * 2f);
-            tags.putBoolean("Hot", true);
-            return fluid;
         }
 
         @Override
@@ -393,41 +420,55 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         }
     }
 
-    private static class CompressorTank extends FluidTank {
+    private class CompressorTank extends FluidTank {
 
         public CompressorTank() {
-            super(0, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
+            super(1000, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
             && (!e.hasTag() || !e.getTag().getBoolean("Hot"))); // Is Fluid not already hot ?
+        }
+
+        @Override
+        protected void onContentsChanged() {
+            super.onContentsChanged();
+            if (!level.isClientSide) {
+                setChanged();
+                sendData();
+            }
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
             if (!resource.isEmpty() && this.isFluidValid(resource)) {
                 if (action.simulate()) {
-                    if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                        return resource.getAmount();
+                    if (this.fluid.isEmpty()) {
+                        return Math.min(this.capacity * 2, resource.getAmount());
                     } else {
-                        return 0;
+                        return this.fluid.getFluid() != resource.getFluid() ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
                     }
-                } else if (this.fluid.isEmpty() || this.fluid.getAmount() == 0) {
-                    this.fluid = pressurizeFluid(resource.copy());
+                } else if (this.fluid.isEmpty()) {
+                    this.fluid = pressurizeFluid(new FluidStack(resource, Math.min(this.capacity * 2, resource.getAmount())));
                     this.onContentsChanged();
-                    return resource.getAmount(); //this.fluid.getAmount(); // TODO return which one is more appropriate
-                } else {
+                    return Math.min(this.capacity * 2, resource.getAmount());
+                } else if (this.fluid.getFluid() != resource.getFluid()) {
                     return 0;
+                } else {
+                    int filled = this.capacity - this.fluid.getAmount();
+                    if (resource.getAmount() < filled * 2) {
+                        this.fluid.grow(resource.getAmount() / 2);
+                        filled = resource.getAmount();
+                    } else {
+                        this.fluid.setAmount(this.capacity);
+                    }
+
+                    if (filled > 0) {
+                        this.onContentsChanged();
+                    }
+
+                    return filled;
                 }
             } else {
                 return 0;
             }
-        }
-
-        protected FluidStack pressurizeFluid(FluidStack fluid) {
-            fluid.setAmount(fluid.getAmount() / 2);
-            CompoundTag tags = fluid.getOrCreateTag();
-            float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
-            tags.putFloat("Pressure", pressure * 2f);
-            tags.putBoolean("Hot", true);
-            return fluid;
         }
     }
 }
