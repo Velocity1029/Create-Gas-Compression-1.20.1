@@ -20,6 +20,7 @@ import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
+import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlock;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineGenerator;
 import com.velocity1029.create_gas_compression.blocks.heat_exchanger.CompressedGasCoolerBlock;
@@ -179,6 +180,16 @@ public class CGCBlocks {
 //                    .simpleItem()
 //                    .lang("Compressor Cylinder")
 //                    .register();
+
+
+    public static final BlockEntry<DiffuserBlock> DIFFUSER =
+            REGISTRATE.block("diffuser", DiffuserBlock::new)
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .transform(pickaxeOnly())
+                    .transform(isPressurized())
+                    .simpleItem()
+                    .lang("Diffuser")
+                    .register();
 
     // Load this class
 

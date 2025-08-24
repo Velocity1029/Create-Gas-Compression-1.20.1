@@ -3,6 +3,7 @@
   "block.create_gas_compression.compressor_cylinder": "Compressor Cylinder",
   "block.create_gas_compression.compressor_frame": "Compressor Frame",
   "block.create_gas_compression.compressor_guide": "Compressor Guide",
+  "block.create_gas_compression.diffuser": "Diffuser",
   "block.create_gas_compression.encased_iron_pipe": "Encased Iron Pipe",
   "block.create_gas_compression.heat_exchanger": "Heat Exchanger",
   "block.create_gas_compression.iron_casing": "Iron Casing",

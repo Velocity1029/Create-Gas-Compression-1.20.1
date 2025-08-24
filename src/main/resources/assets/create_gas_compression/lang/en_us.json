@@ -6,6 +6,7 @@
   "block.create_gas_compression.natural_gas_engine": "Natural Gas Engine",
   "block.create_gas_compression.compressor_frame": "Compressor Frame",
   "block.create_gas_compression.compressor_guide": "Compressor Guide",
+  "block.create_gas_compression.diffuser": "Diffuser",
   "block.create_gas_compression.compressor_cylinder": "Compressor Cylinder",
   "block.create_gas_compression.heat_exchanger": "Heat Exchanger",
   "block.create_gas_compression.iron_casing": "Iron Casing",

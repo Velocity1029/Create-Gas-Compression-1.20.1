@@ -8,6 +8,7 @@ import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.Comp
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameVisual;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.engines.EngineRenderer;
 import com.velocity1029.create_gas_compression.blocks.engines.variants.NaturalGasVariant;
@@ -70,6 +71,11 @@ public class CGCBlockEntities {
     public static final BlockEntityEntry<CompressedGasCoolerBlockEntity> COMPRESSED_GAS_COOLER = REGISTRATE
             .blockEntity("compressed_gas_cooler", CompressedGasCoolerBlockEntity::new)
             .validBlocks(CGCBlocks.COMPRESSED_GAS_COOLER)
+            .register();
+
+    public static final BlockEntityEntry<DiffuserBlockEntity> DIFFUSER = REGISTRATE
+            .blockEntity("diffuser", DiffuserBlockEntity::new)
+            .validBlocks(CGCBlocks.DIFFUSER)
             .register();
 
     // Load this class

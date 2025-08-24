@@ -9,6 +9,7 @@
     "create_gas_compression:compressor_guide",
     "create_gas_compression:compressor_cylinder",
     "create_gas_compression:heat_exchanger",
-    "create_gas_compression:compressed_gas_cooler"
+    "create_gas_compression:compressed_gas_cooler",
+    "create_gas_compression:diffuser"
   ]
 }
