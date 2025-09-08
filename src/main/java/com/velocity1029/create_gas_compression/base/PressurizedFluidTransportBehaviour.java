@@ -1,7 +1,5 @@
 package com.velocity1029.create_gas_compression.base;
 
-import com.simibubi.create.AllSpecialTextures;
-import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidReactions;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
@@ -14,7 +12,6 @@ import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEnti
 import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
-import net.createmod.catnip.math.VecHelper;
 import net.createmod.catnip.outliner.Outliner;
 import net.createmod.catnip.theme.Color;
 import net.minecraft.core.BlockPos;
@@ -24,15 +21,12 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.FluidStack;
-import org.joml.Vector3d;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.function.Predicate;
 
 public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
@@ -238,7 +232,7 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
                         if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
                             // Burst!
                             float strength = fluidTags.getFloat("Pressure");
-                            explosions.put(connectedPos, strength);
+                            explosions.put(pos, strength);
                         }
                     }
 
