@@ -102,7 +102,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return key.equals(guidePos);
     }
 
-    protected boolean isFront(Direction side) {
+    public boolean isFront(Direction side) {
         BlockState blockState = getBlockState();
         if (!(blockState.getBlock() instanceof CompressorCylinderBlock))
             return false;
