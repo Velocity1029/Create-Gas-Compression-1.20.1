@@ -56,8 +56,14 @@ public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGog
         int diffusedAmount = (int) Math.floor(fluid.getAmount() * diffusionRatio);
 
         fluid.setAmount(diffusedAmount);
-        tags.putFloat("Pressure", diffusedPressure);
-        fluid.setTag(tags);
+        if (diffusedPressure <= 1)
+            fluid.setTag(null);
+        else {
+            tags.putFloat("Pressure", diffusedPressure);
+            if (diffusionRatio >= 2)
+                tags.putBoolean("Hot", false);
+            fluid.setTag(tags);
+        }
 
         return fluid;
     }
