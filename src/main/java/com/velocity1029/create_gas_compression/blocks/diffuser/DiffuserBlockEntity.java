@@ -6,12 +6,10 @@ import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
-import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.GlassFluidPipeBlock;
-import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.velocity1029.create_gas_compression.base.IFannable;
+import com.velocity1029.create_gas_compression.base.FluidTransformer;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -22,24 +20,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 
 public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGoggleInformation, IHaveHoveringInformation {
 
-    // Fluid Handling
-    private final DiffusingTank tank;
-
     public DiffuserBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        tank = new DiffusingTank();
     }
 
     @Override
@@ -55,14 +44,6 @@ public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGog
                 getCapability(ForgeCapabilities.FLUID_HANDLER));
     }
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return LazyOptional.of(() -> tank).cast();
-        return super.getCapability(cap, side);
-    }
-
     private FluidStack diffuseFluid(FluidStack fluid) {
         if (!fluid.hasTag() || fluid.isEmpty()) return fluid;
         CompoundTag tags = fluid.getTag();
@@ -74,81 +55,29 @@ public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGog
         float diffusedPressure = pressure / diffusionRatio;
         int diffusedAmount = (int) Math.floor(fluid.getAmount() * diffusionRatio);
 
-        FluidStack diffusedFluid = new FluidStack(fluid, diffusedAmount);
+        fluid.setAmount(diffusedAmount);
         tags.putFloat("Pressure", diffusedPressure);
-        diffusedFluid.setTag(tags);
+        fluid.setTag(tags);
 
-        return diffusedFluid;
+        return fluid;
     }
 
-    private class DiffusingTank extends FluidTank {
-
-        public DiffusingTank() {
-            super(1000);
-        }
-
-        @Override
-        protected void onContentsChanged() {
-            super.onContentsChanged();
-            if (!level.isClientSide) {
-                setChanged();
-                sendData();
-            }
-        }
-
-        @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            resource = diffuseFluid(resource);
-            if (!resource.isEmpty() && this.isFluidValid(resource)) {
-                if (action.simulate()) {
-                    if (this.fluid.isEmpty()) {
-                        return Math.min(this.capacity, resource.getAmount());
-                    } else {
-                        return this.fluid.getFluid() != resource.getFluid() ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
-                    }
-                } else if (this.fluid.isEmpty()) {
-                    this.fluid = new FluidStack(resource, Math.min(this.capacity, resource.getAmount()));
-                    this.onContentsChanged();
-                    return this.fluid.getAmount();
-                } else if (this.fluid.getFluid() != resource.getFluid()) {
-                    return 0;
-                } else {
-                    int filled = this.capacity - this.fluid.getAmount();
-                    if (resource.getAmount() < filled) {
-                        this.fluid.grow(resource.getAmount());
-                        filled = resource.getAmount();
-                    } else {
-                        this.fluid.setAmount(this.capacity);
-                    }
-
-                    if (filled > 0) {
-                        this.onContentsChanged();
-                    }
-
-                    return filled;
-                }
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    class DiffuserFluidTransportBehaviour extends PressurizedFluidTransportBehaviour {
+    class DiffuserFluidTransportBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
 
         public DiffuserFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
         }
 
         @Override
-        public FluidStack getProvidedOutwardFluid(Direction side) {
-            FluidStack superFluid = super.getProvidedOutwardFluid(side);
-            return diffuseFluid(superFluid);
+        public FluidStack transformFluid(FluidStack fluid) {
+            diffuseFluid(fluid);
+            return fluid;
         }
 
         @Override
-        public boolean canHaveFlowToward(BlockState state, Direction direction) {
-            return (FluidPipeBlock.isPipe(state) || state.getBlock() instanceof EncasedPipeBlock)
-                    && state.getValue(FluidPipeBlock.PROPERTY_BY_DIRECTION.get(direction));
+        public FluidStack getProvidedOutwardFluid(Direction side) {
+            FluidStack superFluid = super.getProvidedOutwardFluid(side);
+            return diffuseFluid(superFluid.copy());
         }
 
         @Override

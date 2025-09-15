@@ -8,14 +8,12 @@ import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.velocity1029.create_gas_compression.base.FluidTransformer;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
-import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
 import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
-import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
-import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.createmod.catnip.data.Couple;
 import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.math.BlockFace;
@@ -23,29 +21,22 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
-
-    // Fluid Handling
-    protected FluidTank tank;
+public class CompressorCylinderBlockEntity extends PumpBlockEntity {
 
     Couple<MutableBoolean> sidesToUpdate;
     boolean pressureUpdate;
@@ -57,7 +48,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
 
     public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
-        tank = new CompressorTank();
     }
 
     @Override
@@ -164,18 +154,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         if (behaviour != null)
             behaviour.wipePressure();
         sidesToUpdate.forEach(MutableBoolean::setTrue);
-    }
-
-    @Override
-    protected void read(CompoundTag compound, boolean clientPacket) {
-        super.read(compound, clientPacket);
-        tank.readFromNBT(compound.getCompound("Tank"));
-    }
-
-    @Override
-    protected void write(CompoundTag compound, boolean clientPacket) {
-        super.write(compound, clientPacket);
-        compound.put("Tank", tank.writeToNBT(new CompoundTag()));
     }
 
     protected void distributePressureTo(Direction side) {
@@ -356,23 +334,8 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return false;
     }
 
-    @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        return containedFluidTooltip(tooltip, isPlayerSneaking,
-                getCapability(ForgeCapabilities.FLUID_HANDLER));
-    }
-
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return LazyOptional.of(() -> tank).cast();
-        return super.getCapability(cap, side);
-    }
-
     protected static FluidStack pressurizeFluid(FluidStack fluid) {
-        if (fluid.isEmpty() ) return fluid;
-        fluid.setAmount(fluid.getAmount() / 2);
+        if (fluid.isEmpty()) return fluid;
         CompoundTag tags = fluid.getOrCreateTag();
         float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
         tags.putFloat("Pressure", pressure * 2f);
@@ -380,7 +343,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         return fluid;
     }
 
-    class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour {
+    class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
 
         public CompressorFluidTransferBehaviour(SmartBlockEntity be) {
             super(be);
@@ -388,9 +351,16 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
         }
 
         @Override
+        public FluidStack transformFluid(FluidStack fluid) {
+            pressurizeFluid(fluid);
+            fluid.setAmount(fluid.getAmount() / 2);
+            return fluid;
+        }
+
+        @Override
         public FluidStack getProvidedOutwardFluid(Direction side) {
             FluidStack superFluid = super.getProvidedOutwardFluid(side);
-            return pressurizeFluid(superFluid);
+            return pressurizeFluid(superFluid.copy());
         }
 
         @Override
@@ -417,58 +387,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity  {
             if (attachment == AttachmentTypes.RIM)
                 return AttachmentTypes.NONE;
             return attachment;
-        }
-    }
-
-    private class CompressorTank extends FluidTank {
-
-        public CompressorTank() {
-            super(1000, (e) -> e.getFluid().is(CGCTags.CGCFluidTags.GAS.tag) // Is Fluid a gas ?
-            && (!e.hasTag() || !e.getTag().getBoolean("Hot"))); // Is Fluid not already hot ?
-        }
-
-        @Override
-        protected void onContentsChanged() {
-            super.onContentsChanged();
-            if (!level.isClientSide) {
-                setChanged();
-                sendData();
-            }
-        }
-
-        @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            if (!resource.isEmpty() && this.isFluidValid(resource)) {
-                if (action.simulate()) {
-                    if (this.fluid.isEmpty()) {
-                        return Math.min(this.capacity * 2, resource.getAmount());
-                    } else {
-                        return this.fluid.getFluid() != resource.getFluid() ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
-                    }
-                } else if (this.fluid.isEmpty()) {
-                    this.fluid = pressurizeFluid(new FluidStack(resource, Math.min(this.capacity * 2, resource.getAmount())));
-                    this.onContentsChanged();
-                    return Math.min(this.capacity * 2, resource.getAmount());
-                } else if (this.fluid.getFluid() != resource.getFluid()) {
-                    return 0;
-                } else {
-                    int filled = this.capacity - this.fluid.getAmount();
-                    if (resource.getAmount() < filled * 2) {
-                        this.fluid.grow(resource.getAmount() / 2);
-                        filled = resource.getAmount();
-                    } else {
-                        this.fluid.setAmount(this.capacity);
-                    }
-
-                    if (filled > 0) {
-                        this.onContentsChanged();
-                    }
-
-                    return filled;
-                }
-            } else {
-                return 0;
-            }
         }
     }
 }
