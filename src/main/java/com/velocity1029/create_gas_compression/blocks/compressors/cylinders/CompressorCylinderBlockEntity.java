@@ -344,7 +344,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity {
         return fluid;
     }
 
-    class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
+    public class CompressorFluidTransferBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
 
         public CompressorFluidTransferBehaviour(SmartBlockEntity be) {
             super(be);

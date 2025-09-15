@@ -19,6 +19,7 @@ import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 
+import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
 import net.createmod.catnip.math.BlockFace;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.data.Pair;
@@ -253,9 +254,18 @@ public class PressurizedFluidNetwork {
                     ArrayList<FluidTransformer> outputTransformers = fluidTransformers.get(pair.getFirst().getPos());
                     FluidStack transformerFluid = new FluidStack(transfer, toTransfer);
 
+                    // Compression loss correction variable
+                    int compressionLoss = 0;
                     if (outputTransformers != null) {
                         for (FluidTransformer fluidTransformer : outputTransformers) {
+                            int preTransformedAmount = transformerFluid.getAmount();
+
                             fluidTransformer.transformFluid(transformerFluid);
+
+                            if (fluidTransformer instanceof CompressorCylinderBlockEntity.CompressorFluidTransferBehaviour compressionTransformer) {
+                                int compressionRemainder = preTransformedAmount % 2;
+                                compressionLoss += compressionRemainder * ((int) transformerFluid.getTag().getFloat("Pressure") / 2);
+                            }
                         }
                         toTransfer = transformerFluid.getAmount();
                     }
@@ -279,6 +289,7 @@ public class PressurizedFluidNetwork {
                         fill -= simulatedTransfer - toTransfer;
                     }
 
+                    transfer.setAmount(transfer.getAmount() + compressionLoss);
                     if (fill != 0)
                         transfer.setAmount(transfer.getAmount() - ((dividedTransfer * transformerFluid.getAmount()) / fill));
                     if (fill < simulatedTransfer)
