@@ -337,6 +337,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity {
     protected static FluidStack pressurizeFluid(FluidStack fluid) {
         if (fluid.isEmpty()) return fluid;
         CompoundTag tags = fluid.getOrCreateTag();
+        if (tags.contains("Hot", Tag.TAG_BYTE) && tags.getBoolean("Hot")) return FluidStack.EMPTY;
         float pressure = tags.contains("Pressure", Tag.TAG_FLOAT) ? tags.getFloat("Pressure") : 1;
         tags.putFloat("Pressure", pressure * 2f);
         tags.putBoolean("Hot", true);

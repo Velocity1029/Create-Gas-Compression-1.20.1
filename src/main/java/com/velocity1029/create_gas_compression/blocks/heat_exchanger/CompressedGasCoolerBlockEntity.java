@@ -25,7 +25,7 @@ import java.util.List;
 public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity implements IFannable {
 
     // Fluid Handling
-    public static boolean shouldCool = false;
+    public boolean shouldCool = false;
     private int coolCounter = 0;
 
     public CompressedGasCoolerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -57,7 +57,7 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         coolCounter = 5;
     }
 
-    protected static FluidStack coolFluid(FluidStack fluid) {
+    public FluidStack coolFluid(FluidStack fluid) {
         if (fluid.isEmpty() || !fluid.hasTag() || !shouldCool) return fluid;
         CompoundTag tags = fluid.getTag();
         boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
