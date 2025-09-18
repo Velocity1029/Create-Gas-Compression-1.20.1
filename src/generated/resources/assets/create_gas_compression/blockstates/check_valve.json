@@ -1,0 +1,224 @@
+{
+  "variants": {
+    "flow=east,valve=down,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 90
+    },
+    "flow=east,valve=down,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 90
+    },
+    "flow=east,valve=east,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=east,valve=east,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=east,valve=north,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=east,valve=north,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=east,valve=south,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=east,valve=south,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=east,valve=up,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 270
+    },
+    "flow=east,valve=up,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 270
+    },
+    "flow=east,valve=west,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=east,valve=west,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=north,valve=down,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180
+    },
+    "flow=north,valve=down,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180
+    },
+    "flow=north,valve=east,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=north,valve=east,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=north,valve=north,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=north,valve=north,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=north,valve=south,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=north,valve=south,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=north,valve=up,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 180
+    },
+    "flow=north,valve=up,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 180
+    },
+    "flow=north,valve=west,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=north,valve=west,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=south,valve=down,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 180
+    },
+    "flow=south,valve=down,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 180
+    },
+    "flow=south,valve=east,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=south,valve=east,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=south,valve=north,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=south,valve=north,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=south,valve=south,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=south,valve=south,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=south,valve=up,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block"
+    },
+    "flow=south,valve=up,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block"
+    },
+    "flow=south,valve=west,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=south,valve=west,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=west,valve=down,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 270
+    },
+    "flow=west,valve=down,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 180,
+      "y": 270
+    },
+    "flow=west,valve=east,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=west,valve=east,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270
+    },
+    "flow=west,valve=north,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=west,valve=north,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 270
+    },
+    "flow=west,valve=south,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=west,valve=south,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 90
+    },
+    "flow=west,valve=up,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 90
+    },
+    "flow=west,valve=up,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "y": 90
+    },
+    "flow=west,valve=west,waterlogged=false": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    },
+    "flow=west,valve=west,waterlogged=true": {
+      "model": "create_gas_compression:block/check_valve/block",
+      "x": 270,
+      "y": 180
+    }
+  }
+}

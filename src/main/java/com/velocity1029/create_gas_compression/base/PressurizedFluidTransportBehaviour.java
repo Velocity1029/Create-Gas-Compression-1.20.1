@@ -1,16 +1,19 @@
 package com.velocity1029.create_gas_compression.base;
 
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidReactions;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
+import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
+import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.outliner.Outliner;
@@ -49,34 +52,53 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
     @Override
     public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
                                                     Direction direction) {
-        AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
-
-        BlockPos offsetPos = pos.relative(direction);
-        BlockState otherState = world.getBlockState(offsetPos);
-
-        if (state.getBlock() instanceof EncasedPipeBlock && attachment != AttachmentTypes.DRAIN)
+        if (!canHaveFlowToward(state, direction))
             return AttachmentTypes.NONE;
 
-        if (attachment == AttachmentTypes.RIM) {
-            if (!IronPipeBlock.isPipe(otherState) && !(otherState.getBlock() instanceof EncasedPipeBlock)
-                    && !(otherState.getBlock() instanceof GlassIronPipeBlock)) {
-                PressurizedFluidTransportBehaviour pipeBehaviour =
-                        BlockEntityBehaviour.get(world, offsetPos, PressurizedFluidTransportBehaviour.TYPE);
-                if (pipeBehaviour != null && pipeBehaviour.canHaveFlowToward(otherState, direction.getOpposite()))
-                    return AttachmentTypes.DETAILED_CONNECTION;
-            }
+        BlockPos offsetPos = pos.relative(direction);
+        BlockState facingState = world.getBlockState(offsetPos);
 
-            if (!IronPipeBlock.shouldDrawRim(world, pos, state, direction))
-                return FluidPropagator.getStraightPipeAxis(state) == direction.getAxis()
-                        ? AttachmentTypes.CONNECTION
-                        : AttachmentTypes.DETAILED_CONNECTION;
-        }
+        if (facingState.getBlock() instanceof PumpBlock
+                && facingState.getValue(PumpBlock.FACING) == direction.getOpposite())
+            return AttachmentTypes.NONE;
 
-        if (attachment == AttachmentTypes.NONE
-                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction)))
-            return AttachmentTypes.DETAILED_CONNECTION;
+        if (AllBlocks.ENCASED_FLUID_PIPE.has(facingState)
+                && facingState.getValue(EncasedPipeBlock.FACING_TO_PROPERTY_MAP.get(direction.getOpposite())))
+            return AttachmentTypes.RIM;
 
-        return attachment;
+        if (FluidPropagator.hasFluidCapability(world, offsetPos, direction.getOpposite())
+                && !AllBlocks.HOSE_PULLEY.has(facingState))
+            return AttachmentTypes.DRAIN;
+
+        return AttachmentTypes.RIM;
+//        AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
+//
+//        BlockPos offsetPos = pos.relative(direction);
+//        BlockState otherState = world.getBlockState(offsetPos);
+//
+//        if (state.getBlock() instanceof EncasedPipeBlock && attachment != AttachmentTypes.DRAIN)
+//            return AttachmentTypes.NONE;
+//
+//        if (attachment == AttachmentTypes.RIM) {
+//            if (!IronPipeBlock.isPipe(otherState) && !(otherState.getBlock() instanceof EncasedPipeBlock)
+//                    && !(otherState.getBlock() instanceof GlassIronPipeBlock)) {
+//                PressurizedFluidTransportBehaviour pipeBehaviour =
+//                        BlockEntityBehaviour.get(world, offsetPos, PressurizedFluidTransportBehaviour.TYPE);
+//                if (pipeBehaviour != null && pipeBehaviour.canHaveFlowToward(otherState, direction.getOpposite()))
+//                    return AttachmentTypes.DETAILED_CONNECTION;
+//            }
+//
+//            if (!IronPipeBlock.shouldDrawRim(world, pos, state, direction))
+//                return FluidPropagator.getStraightPipeAxis(state) == direction.getAxis()
+//                        ? AttachmentTypes.CONNECTION
+//                        : AttachmentTypes.DETAILED_CONNECTION;
+//        }
+//
+//        if (attachment == AttachmentTypes.NONE
+//                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction)))
+//            return AttachmentTypes.DETAILED_CONNECTION;
+//
+//        return attachment;
     }
 
 	public void visualizePressure(PipeConnection connection, BlockPos pos) {

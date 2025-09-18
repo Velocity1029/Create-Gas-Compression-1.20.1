@@ -14,6 +14,7 @@ import com.velocity1029.create_gas_compression.blocks.engines.EngineRenderer;
 import com.velocity1029.create_gas_compression.blocks.engines.variants.NaturalGasVariant;
 import com.velocity1029.create_gas_compression.blocks.heat_exchanger.CompressedGasCoolerBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.pipes.valve.CheckValveBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankRenderer;
 
@@ -76,6 +77,11 @@ public class CGCBlockEntities {
     public static final BlockEntityEntry<DiffuserBlockEntity> DIFFUSER = REGISTRATE
             .blockEntity("diffuser", DiffuserBlockEntity::new)
             .validBlocks(CGCBlocks.DIFFUSER)
+            .register();
+
+    public static final BlockEntityEntry<CheckValveBlockEntity> CHECK_VALVE = REGISTRATE
+            .blockEntity("check_valve", CheckValveBlockEntity::new)
+            .validBlocks(CGCBlocks.CHECK_VALVE)
             .register();
 
     // Load this class
