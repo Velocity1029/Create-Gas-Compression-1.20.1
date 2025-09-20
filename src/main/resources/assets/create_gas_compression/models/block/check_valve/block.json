@@ -6,7 +6,8 @@
 		"6": "create_gas_compression:block/pipes",
 		"7": "create_gas_compression:block/check_valve_1",
 		"8": "create_gas_compression:block/check_valve_2",
-		"9": "create_gas_compression:block/check_valve_3"
+		"9": "create_gas_compression:block/check_valve_3",
+		"particle": "create_gas_compression:block/check_valve_1"
 	},
 	"elements": [
 		{

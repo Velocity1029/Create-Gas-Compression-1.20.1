@@ -14,6 +14,7 @@
   "block.create_gas_compression.encased_iron_pipe": "Encased Iron Pipe",
   "block.create_gas_compression.compressed_gas_cooler": "Compressed Gas Cooler",
   "block.create_gas_compression.iron_tank": "Iron Tank",
+  "block.create_gas_compression.check_valve": "Check Valve",
   "fluid.create_gas_compression.air": "Air",
   "fluid.create_gas_compression.carbon_dioxide": "Carbon Dioxide",
   "fluid.create_gas_compression.natural_gas": "Natural Gas",
