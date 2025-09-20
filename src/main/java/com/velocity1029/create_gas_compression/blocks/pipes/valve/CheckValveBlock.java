@@ -1,6 +1,5 @@
 package com.velocity1029.create_gas_compression.blocks.pipes.valve;
 
-import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
@@ -29,21 +28,17 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
-import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.TickPriority;
 
-import javax.annotation.Nullable;
 
 public class CheckValveBlock extends Block implements IAxisPipe, IWrenchable, IBE<CheckValveBlockEntity>, ProperWaterloggedBlock {
     public static final DirectionProperty VALVE;
-//    public static final EnumProperty<AttachFace> FACE;
     public static final DirectionProperty FLOW;
 
     public CheckValveBlock(Properties p_52591_) {
@@ -68,11 +63,12 @@ public class CheckValveBlock extends Block implements IAxisPipe, IWrenchable, IB
             if ($$1.getAxis() == Axis.Y) {
                 $$3 = (BlockState)((BlockState)this.defaultBlockState().setValue(VALVE, $$1 == Direction.UP ? Direction.DOWN : Direction.UP)).setValue(FLOW, ctx.getHorizontalDirection());
             } else {
-                $$3 = (BlockState)((BlockState)this.defaultBlockState().setValue(VALVE, $$1.getOpposite())).setValue(FLOW, Direction.UP);
+                $$3 = (BlockState)((BlockState)this.defaultBlockState().setValue(VALVE, $$1.getOpposite())).setValue(FLOW, ctx.getNearestLookingVerticalDirection());
             }
 
             if ($$3.canSurvive(ctx.getLevel(), ctx.getClickedPos())) {
                 stateForPlacement = $$3;
+                break;
             }
         }
 
@@ -104,56 +100,6 @@ public class CheckValveBlock extends Block implements IAxisPipe, IWrenchable, IB
 
         return withWater(stateForPlacement, ctx);
     }
-
-//    @Nullable
-//    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-//        Direction[] var2 = ctx.getNearestLookingDirections();
-//        int var3 = var2.length;
-//
-//        BlockState stateForPlacement = this.defaultBlockState();
-//        for(int var4 = 0; var4 < var3; ++var4) {
-//            Direction $$1 = var2[var4];
-//            BlockState $$3;
-//            if ($$1.getAxis() == Axis.Y) {
-//                $$3 = (BlockState)((BlockState)this.defaultBlockState().setValue(FACE, $$1 == Direction.UP ? AttachFace.CEILING : AttachFace.FLOOR)).setValue(FACING, ctx.getHorizontalDirection());
-//            } else {
-//                $$3 = (BlockState)((BlockState)this.defaultBlockState().setValue(FACE, AttachFace.WALL)).setValue(FACING, $$1.getOpposite());
-//            }
-//
-//            if ($$3.canSurvive(ctx.getLevel(), ctx.getClickedPos())) {
-//                stateForPlacement = $$3;
-//            }
-//        }
-//
-//        Axis prefferedAxis = null;
-//        BlockPos pos = ctx.getClickedPos();
-//        Level world = ctx.getLevel();
-//        for (Direction side : Iterate.directions) {
-//            if (!prefersConnectionTo(world, pos, side))
-//                continue;
-//            if (prefferedAxis != null && prefferedAxis != side.getAxis()) {
-//                prefferedAxis = null;
-//                break;
-//            }
-//            prefferedAxis = side.getAxis();
-//        }
-//
-//        if (prefferedAxis == Axis.Y)
-//            stateForPlacement = stateForPlacement.setValue(FACE, AttachFace.WALL)
-//                    .setValue(FACING, stateForPlacement.getValue(FACING)
-//                            .getOpposite());
-//        else if (prefferedAxis != null) {
-//            if (stateForPlacement.getValue(FACE) == AttachFace.WALL)
-//                stateForPlacement = stateForPlacement.setValue(FACE, AttachFace.FLOOR);
-//            for (Direction direction : ctx.getNearestLookingDirections()) {
-//                if (direction.getAxis() != prefferedAxis)
-//                    continue;
-//                stateForPlacement = stateForPlacement.setValue(FACING, direction.getOpposite());
-//            }
-//        }
-//
-//        return withWater(stateForPlacement, ctx);
-//    }
 
     protected boolean prefersConnectionTo(LevelReader reader, BlockPos pos, Direction facing) {
         BlockPos offset = pos.relative(facing);
@@ -213,17 +159,8 @@ public class CheckValveBlock extends Block implements IAxisPipe, IWrenchable, IB
         Direction face = state.getValue(VALVE);
         VoxelShaper shape = face == Direction.UP ? CGCShapes.CHECK_VALVE_FLOOR
                 : face == Direction.DOWN ? CGCShapes.CHECK_VALVE_CEILING : CGCShapes.CHECK_VALVE_WALL;
-        return shape.get(state.getValue(FLOW));
+        return shape == CGCShapes.CHECK_VALVE_WALL ? shape.get(state.getValue(VALVE)) : shape.get(state.getValue(FLOW));
     }
-
-//    @Override
-//    public VoxelShape getShape(BlockState state, BlockGetter p_220053_2_, BlockPos p_220053_3_,
-//                               CollisionContext p_220053_4_) {
-//        AttachFace face = state.getValue(FACE);
-//        VoxelShaper shape = face == AttachFace.FLOOR ? AllShapes.SMART_FLUID_PIPE_FLOOR
-//                : face == AttachFace.CEILING ? AllShapes.SMART_FLUID_PIPE_CEILING : AllShapes.SMART_FLUID_PIPE_WALL;
-//        return shape.get(state.getValue(FACING));
-//    }
 
     @Override
     public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, LivingEntity pPlacer, ItemStack pStack) {
@@ -273,10 +210,36 @@ public class CheckValveBlock extends Block implements IAxisPipe, IWrenchable, IB
         return pState.rotate(pMirror.getRotation((Direction)pState.getValue(FLOW)));
     }
 
+    @Override
+    public BlockState getRotatedBlockState(BlockState originalState, Direction targetedFace) {
+        BlockState newState = originalState;
+
+        if (!originalState.hasProperty(FLOW))
+            return originalState;
+
+        Direction stateFacing = originalState.getValue(FLOW);
+        Direction valveFacing = originalState.getValue(VALVE);
+
+        if (stateFacing.getAxis()
+                .equals(targetedFace.getAxis())) {
+            if (stateFacing.getAxis().isVertical())
+                return originalState.setValue(VALVE, valveFacing.getClockWise(targetedFace.getAxis()));
+            return originalState;
+        }
+        if (stateFacing.getAxis().isVertical() && valveFacing.getAxis().equals(targetedFace.getAxis()))
+            return originalState;
+        do {
+            newState = newState.setValue(FLOW, newState.getValue(FLOW).getClockWise(targetedFace.getAxis()));
+            if (!targetedFace.getAxis().equals(newState.getValue(VALVE).getAxis()))
+                newState = newState.setValue(VALVE, newState.getValue(VALVE).getClockWise(targetedFace.getAxis()));
+        } while (newState.getValue(FLOW)
+                .getAxis()
+                .equals(targetedFace.getAxis()));
+        return newState;
+    }
+
     static {
         VALVE = DirectionProperty.create("valve", new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN});
-//        FACE = BlockStateProperties.ATTACH_FACE;
-//        FACING = BlockStateProperties.HORIZONTAL_FACING;
-        FLOW = DirectionProperty.create("flow", new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN});
+        FLOW = BlockStateProperties.FACING;
     }
 }

@@ -17,24 +17,13 @@ public class CGCShapes {
 
     CHECK_VALVE_FLOOR = shape(4, 4, 0, 12, 12, 16).add(3, 3, 3, 13, 13, 13)
             .add(3.9, 13, 3.9, 12.1, 17, 12.1)
-//			.add(5, 13, 3, 11, 14, 11)
-//			.add(5, 14, 4, 11, 15, 10)
-//			.add(5, 15, 5, 11, 16, 9)
-//			.add(5, 16, 6, 11, 17, 8)
-			.forHorizontal(SOUTH),
+			.forDirectional(SOUTH),
     CHECK_VALVE_WALL = shape(4, 0, 4, 12, 16, 12).add(3, 3, 3, 13, 13, 13)
-			.add(5, 5, 13, 11, 13, 14)
-			.add(5, 6, 14, 11, 12, 15)
-			.add(5, 7, 15, 11, 11, 16)
-			.add(5, 8, 16, 11, 10, 17)
-			.forHorizontal(SOUTH),
+            .add(3.9, 3.9, 14, 12.1, 12.1, 17)
+			.forDirectional(SOUTH),
     CHECK_VALVE_CEILING = shape(4, 4, 0, 12, 12, 16).add(3, 3, 3, 13, 13, 13)
             .add(3.9, -1, 3.9, 12.1, 3, 12.1)
-//			.add(5, 2, 3, 11, 3, 11)
-//			.add(5, 1, 4, 11, 2, 10)
-//			.add(5, 0, 5, 11, 1, 9)
-//			.add(5, -1, 6, 11, 0, 8)
-			.forHorizontal(SOUTH);
+			.forDirectional(SOUTH);
 
     private static Builder shape(VoxelShape shape) {
         return new Builder(shape);

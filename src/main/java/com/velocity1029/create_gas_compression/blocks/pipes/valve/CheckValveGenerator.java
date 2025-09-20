@@ -16,17 +16,25 @@ public class CheckValveGenerator extends SpecialBlockStateGen {
     @Override
     protected int getXRotation(BlockState state) {
         Direction valveFace = state.getValue(CheckValveBlock.VALVE);
-        return valveFace == Direction.DOWN ? 180 : valveFace == Direction.UP ? 0 : 270;
-//        return 0;
+        Direction flowFace = state.getValue(CheckValveBlock.FLOW);
+        return valveFace == Direction.DOWN ? 180
+                : valveFace == Direction.UP ? 0
+                : flowFace == Direction.DOWN ? 90
+                : flowFace == Direction.UP ? 270
+                : 0;
     }
 
     @Override
     protected int getYRotation(BlockState state) {
         Direction valveFace = state.getValue(CheckValveBlock.VALVE);
-        int angle = horizontalAngle(state.getValue(CheckValveBlock.FLOW));
-        angle += horizontalAngle(valveFace);
-        return angle + (valveFace == Direction.DOWN ? 180 : 0);
-//        return 0;
+        Direction flowFace = state.getValue(CheckValveBlock.FLOW);
+        int angle = flowFace.getAxis().isVertical()
+                ? valveFace.getAxisDirection().getStep() == flowFace.getAxisDirection().getStep() ? 0 : 180
+                : valveFace.getAxisDirection().getStep() == flowFace.getAxisDirection().getStep() ? 180 : 0;
+        if (valveFace.getAxis() == Direction.Axis.Y && flowFace.getAxis() == Direction.Axis.X
+            || valveFace.getAxis() == Direction.Axis.X && flowFace.getAxis() == Direction.Axis.Y)
+            angle -= 90;
+        return angle;
     }
 
     @Override
