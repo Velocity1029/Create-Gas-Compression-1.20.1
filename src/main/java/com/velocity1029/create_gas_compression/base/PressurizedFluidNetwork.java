@@ -86,10 +86,11 @@ public class PressurizedFluidNetwork {
                     ArrayList<FluidTransformer> transformers = fluidTransformers.get(blockFace.getPos());
                     ArrayList<FluidTransformer> adjacentTransformers = fluidTransformers.get(blockFace.getConnectedPos());
                     ArrayList<FluidTransformer> reversedList = new ArrayList<>();
-                    if (transformers != null && adjacentTransformers != null)
+                    if (transformers != null && adjacentTransformers != null) {
                         reversedList.addAll(adjacentTransformers);
                         reversedList.addAll(transformers);
                         fluidTransformers.put(blockFace.getPos(), reversedList);
+                    }
                 }
                 iterator.remove();
             }
