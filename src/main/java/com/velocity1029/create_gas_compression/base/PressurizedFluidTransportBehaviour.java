@@ -1,25 +1,17 @@
 package com.velocity1029.create_gas_compression.base;
 
-import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidReactions;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
-import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
-import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
-import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
-import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.outliner.Outliner;
 import net.createmod.catnip.theme.Color;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -27,76 +19,14 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.function.Predicate;
 
-public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
-
-    public static final BehaviourType<PressurizedFluidTransportBehaviour> TYPE = new BehaviourType<>();
+public abstract class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
 
     public PressurizedFluidTransportBehaviour(SmartBlockEntity be) {
         super(be);
-    }
-
-    @Override
-    public boolean canHaveFlowToward(BlockState state, Direction direction) {
-        return (IronPipeBlock.isPipe(state) || state.getBlock() instanceof EncasedPipeBlock)
-                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction));
-    }
-
-    @Override
-    public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
-                                                    Direction direction) {
-        if (!canHaveFlowToward(state, direction))
-            return AttachmentTypes.NONE;
-
-        BlockPos offsetPos = pos.relative(direction);
-        BlockState facingState = world.getBlockState(offsetPos);
-
-        if (facingState.getBlock() instanceof PumpBlock
-                && facingState.getValue(PumpBlock.FACING) == direction.getOpposite())
-            return AttachmentTypes.NONE;
-
-        if (AllBlocks.ENCASED_FLUID_PIPE.has(facingState)
-                && facingState.getValue(EncasedPipeBlock.FACING_TO_PROPERTY_MAP.get(direction.getOpposite())))
-            return AttachmentTypes.RIM;
-
-        if (FluidPropagator.hasFluidCapability(world, offsetPos, direction.getOpposite())
-                && !AllBlocks.HOSE_PULLEY.has(facingState))
-            return AttachmentTypes.DRAIN;
-
-        return AttachmentTypes.RIM;
-//        AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
-//
-//        BlockPos offsetPos = pos.relative(direction);
-//        BlockState otherState = world.getBlockState(offsetPos);
-//
-//        if (state.getBlock() instanceof EncasedPipeBlock && attachment != AttachmentTypes.DRAIN)
-//            return AttachmentTypes.NONE;
-//
-//        if (attachment == AttachmentTypes.RIM) {
-//            if (!IronPipeBlock.isPipe(otherState) && !(otherState.getBlock() instanceof EncasedPipeBlock)
-//                    && !(otherState.getBlock() instanceof GlassIronPipeBlock)) {
-//                PressurizedFluidTransportBehaviour pipeBehaviour =
-//                        BlockEntityBehaviour.get(world, offsetPos, PressurizedFluidTransportBehaviour.TYPE);
-//                if (pipeBehaviour != null && pipeBehaviour.canHaveFlowToward(otherState, direction.getOpposite()))
-//                    return AttachmentTypes.DETAILED_CONNECTION;
-//            }
-//
-//            if (!IronPipeBlock.shouldDrawRim(world, pos, state, direction))
-//                return FluidPropagator.getStraightPipeAxis(state) == direction.getAxis()
-//                        ? AttachmentTypes.CONNECTION
-//                        : AttachmentTypes.DETAILED_CONNECTION;
-//        }
-//
-//        if (attachment == AttachmentTypes.NONE
-//                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction)))
-//            return AttachmentTypes.DETAILED_CONNECTION;
-//
-//        return attachment;
     }
 
 	public void visualizePressure(PipeConnection connection, BlockPos pos) {
@@ -125,14 +55,14 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 		});
 	}
 
-//	void visualizeFlow(PressurizedPipeConnection connection, BlockPos pos) {
+//	void visualizeFlow(PipeConnection connection, BlockPos pos) {
 //		if (!connection.hasFlow())
 //			return;
 //
 //        Vec3 directionVec = new Vec3(connection.side.step());
 //		float size = 1 / 4f;
 //		float length = .5f;
-//		PressurizedPipeConnection.Flow flow = connection.flow.get();
+//		PipeConnection.Flow flow = connection.flow.get();
 //		boolean inbound = flow.inbound;
 //		FluidStack fluid = flow.fluid;
 //
@@ -169,7 +99,6 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
     @Override
     public void tick() {
-//        super.tick();
         Level world = getWorld();
         BlockPos pos = getPos();
         boolean onServer = !world.isClientSide || blockEntity.isVirtual();
@@ -283,107 +212,5 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
         for (PipeConnection connection : connections)
             connection.tickFlowProgress(world, pos);
-    }
-
-    @Override
-    public FluidStack getProvidedOutwardFluid(Direction side) {
-        createConnectionData();
-        if (!interfaces.containsKey(side))
-            return FluidStack.EMPTY;
-        return interfaces.get(side)
-                .provideOutboundFlow();
-    }
-
-    @Nullable
-    @Override
-    public PipeConnection getConnection(Direction side) {
-        createConnectionData();
-        return interfaces.get(side);
-    }
-
-    @Override
-    public boolean hasAnyPressure() {
-        createConnectionData();
-        for (PipeConnection pipeConnection : interfaces.values())
-            if (pipeConnection.hasPressure())
-                return true;
-        return false;
-    }
-
-    @Nullable
-    @Override
-    public PipeConnection.Flow getFlow(Direction side) {
-        PipeConnection.Flow flow = super.getFlow(side);
-        createConnectionData();
-        return flow;
-    }
-
-    @Override
-    public void addPressure(Direction side, boolean inbound, float pressure) {
-        createConnectionData();
-        if (!interfaces.containsKey(side))
-            return;
-        interfaces.get(side)
-                .addPressure(inbound, pressure);
-        blockEntity.sendData();
-    }
-
-    @Override
-    public void wipePressure() {
-        if (interfaces != null)
-            for (Direction d : Iterate.directions) {
-                if (!canHaveFlowToward(blockEntity.getBlockState(), d))
-                    interfaces.remove(d);
-                else
-                    interfaces.computeIfAbsent(d, PressurizedPipeConnection::new);
-            }
-        phase = UpdatePhase.WAIT_FOR_PUMPS;
-        createConnectionData();
-        interfaces.values()
-                .forEach(PipeConnection::wipePressure);
-        blockEntity.sendData();
-    }
-
-    @Override
-    public void read(CompoundTag nbt, boolean clientPacket) {
-        if (interfaces == null)
-            interfaces = new IdentityHashMap<>();
-        for (Direction face : Iterate.directions)
-            if (nbt.contains(face.getName()))
-                interfaces.computeIfAbsent(face, d -> new PressurizedPipeConnection(d));
-
-        // Invalid data (missing/outdated). Defer init to runtime
-        if (interfaces.isEmpty()) {
-            interfaces = null;
-            return;
-        }
-
-        interfaces.values()
-                .forEach(connection -> connection.deserializeNBT(nbt, blockEntity.getBlockPos(), clientPacket));
-    }
-
-    @Override
-    public void write(CompoundTag nbt, boolean clientPacket) {
-        if (clientPacket)
-            createConnectionData();
-        if (interfaces == null)
-            return;
-
-        interfaces.values()
-                .forEach(connection -> connection.serializeNBT(nbt, clientPacket));
-    }
-
-    @Override
-    public void initialize() {
-        createConnectionData();
-    }
-
-    public void createConnectionData() {
-        if (interfaces != null)
-            return;
-        interfaces = new IdentityHashMap<>();
-        for (Direction d : Iterate.directions)
-            if (canHaveFlowToward(blockEntity.getBlockState(), d))
-                interfaces.put(d, new PressurizedPipeConnection(d));
     }
 }

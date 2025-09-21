@@ -3,21 +3,15 @@ package com.velocity1029.create_gas_compression.blocks.diffuser;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.api.equipment.goggles.IHaveHoveringInformation;
 import com.simibubi.create.content.fluids.FluidPropagator;
-import com.simibubi.create.content.fluids.FluidTransportBehaviour;
-import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
-import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
-import com.simibubi.create.content.fluids.pipes.GlassFluidPipeBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.FluidTransformer;
-import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -68,7 +62,7 @@ public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGog
         return fluid;
     }
 
-    class DiffuserFluidTransportBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
+    class DiffuserFluidTransportBehaviour extends PressurizedPipeFluidTransportBehaviour implements FluidTransformer {
 
         public DiffuserFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
@@ -85,39 +79,5 @@ public class DiffuserBlockEntity extends IronPipeBlockEntity implements IHaveGog
             FluidStack superFluid = super.getProvidedOutwardFluid(side);
             return diffuseFluid(superFluid.copy());
         }
-
-        @Override
-        public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
-                                                        Direction direction) {
-            AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
-
-            BlockPos offsetPos = pos.relative(direction);
-            BlockState otherState = world.getBlockState(offsetPos);
-
-            if (state.getBlock() instanceof EncasedPipeBlock && attachment != AttachmentTypes.DRAIN)
-                return AttachmentTypes.NONE;
-
-            if (attachment == AttachmentTypes.RIM) {
-                if (!FluidPipeBlock.isPipe(otherState) && !(otherState.getBlock() instanceof EncasedPipeBlock)
-                        && !(otherState.getBlock() instanceof GlassFluidPipeBlock)) {
-                    FluidTransportBehaviour pipeBehaviour =
-                            BlockEntityBehaviour.get(world, offsetPos, FluidTransportBehaviour.TYPE);
-                    if (pipeBehaviour != null && pipeBehaviour.canHaveFlowToward(otherState, direction.getOpposite()))
-                        return AttachmentTypes.DETAILED_CONNECTION;
-                }
-
-                if (!FluidPipeBlock.shouldDrawRim(world, pos, state, direction))
-                    return FluidPropagator.getStraightPipeAxis(state) == direction.getAxis()
-                            ? AttachmentTypes.CONNECTION
-                            : AttachmentTypes.DETAILED_CONNECTION;
-            }
-
-            if (attachment == AttachmentTypes.NONE
-                    && state.getValue(FluidPipeBlock.PROPERTY_BY_DIRECTION.get(direction)))
-                return AttachmentTypes.DETAILED_CONNECTION;
-
-            return attachment;
-        }
-
     }
 }

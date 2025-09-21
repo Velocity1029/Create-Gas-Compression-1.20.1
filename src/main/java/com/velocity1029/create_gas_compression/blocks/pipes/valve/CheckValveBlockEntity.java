@@ -56,14 +56,8 @@ public class CheckValveBlockEntity extends SmartFluidPipeBlockEntity {
 
         @Override
         public void addPressure(Direction side, boolean inbound, float pressure) {
-            createConnectionData();
-            if (!interfaces.containsKey(side))
-                return;
-            // TODO bandaid fix might be problematic
             if (blockEntity.getBlockState().getValue(CheckValveBlock.FLOW) == side ^ inbound)
-                interfaces.get(side)
-                    .addPressure(inbound, pressure);
-            blockEntity.sendData();
+                super.addPressure(side, inbound, pressure);
         }
 
     }

@@ -34,10 +34,16 @@ public class IronPipeBlockEntity extends LockablePipeBlockEntity {
         return !(state.getBlock() instanceof EncasedPipeBlock);
     }
 
-    class PressurizedPipeFluidTransportBehaviour extends PressurizedFluidTransportBehaviour {
+    public class PressurizedPipeFluidTransportBehaviour extends PressurizedFluidTransportBehaviour {
 
         public PressurizedPipeFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
+        }
+
+        @Override
+        public boolean canHaveFlowToward(BlockState state, Direction direction) {
+            return (IronPipeBlock.isPipe(state) || state.getBlock() instanceof EncasedPipeBlock)
+                    && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction));
         }
 
         @Override

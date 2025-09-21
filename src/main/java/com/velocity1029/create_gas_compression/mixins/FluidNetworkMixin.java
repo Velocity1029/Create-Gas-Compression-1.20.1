@@ -1,71 +1,71 @@
-package com.velocity1029.create_gas_compression.base;
+package com.velocity1029.create_gas_compression.mixins;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
-
-import javax.annotation.Nullable;
-
-import com.simibubi.create.content.contraptions.actors.psi.PortableFluidInterfaceBlockEntity.InterfaceFluidHandler;
+import com.simibubi.create.content.fluids.FluidNetwork;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.FluidHelper;
-
+import com.velocity1029.create_gas_compression.base.FluidTransformer;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
-import net.createmod.catnip.math.BlockFace;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
-public class PressurizedFluidNetwork {
+import javax.annotation.Nullable;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.function.Supplier;
 
+@Mixin(FluidNetwork.class)
+public class FluidNetworkMixin {
+
+    @Shadow(remap = false)
     private static int CYCLES_PER_TICK = 16;
 
+    @Shadow(remap = false)
     Level world;
+    @Shadow(remap = false)
     BlockFace start;
 
+    @Shadow(remap = false)
     Supplier<LazyOptional<IFluidHandler>> sourceSupplier;
+    @Shadow(remap = false)
     LazyOptional<IFluidHandler> source;
+    @Shadow(remap = false)
     int transferSpeed;
 
+    @Shadow(remap = false)
     int pauseBeforePropagation;
+    @Shadow(remap = false)
     List<BlockFace> queued;
-    Set<Pair<BlockFace, PressurizedPipeConnection>> frontier;
+    @Shadow(remap = false)
+    Set<Pair<BlockFace, PipeConnection>> frontier;
+    @Shadow(remap = false)
     Set<BlockPos> visited;
+    @Shadow(remap = false)
     FluidStack fluid;
+    @Shadow(remap = false)
     List<Pair<BlockFace, LazyOptional<IFluidHandler>>> targets;
+    @Shadow(remap = false)
     Map<BlockPos, WeakReference<FluidTransportBehaviour>> cache;
-    Map<BlockPos, ArrayList<FluidTransformer>> fluidTransformers;
+    @Unique
+    Map<BlockPos, ArrayList<FluidTransformer>> $_fluidTransformers = new HashMap<>();
 
-    public PressurizedFluidNetwork(Level world, BlockFace location, Supplier<LazyOptional<IFluidHandler>> sourceSupplier) {
-        this.world = world;
-        this.start = location;
-        this.sourceSupplier = sourceSupplier;
-        this.source = LazyOptional.empty();
-        this.fluid = FluidStack.EMPTY;
-        this.frontier = new HashSet<>();
-        this.visited = new HashSet<>();
-        this.targets = new ArrayList<>();
-        this.cache = new HashMap<>();
-        this.fluidTransformers = new HashMap<>();
-        this.queued = new ArrayList<>();
-        reset();
-    }
-
+    /**
+     * @author Velocity1029/
+     * @reason Allow fluid tags to be altered along a flow and account for fluid transformers along a flow.
+     */
+    @Overwrite(remap = false)
     public void tick() {
         if (pauseBeforePropagation > 0) {
             pauseBeforePropagation--;
@@ -78,18 +78,18 @@ public class PressurizedFluidNetwork {
                 BlockFace blockFace = iterator.next();
                 if (!isPresent(blockFace))
                     continue;
-                PressurizedPipeConnection pipeConnection = get(blockFace);
+                PipeConnection pipeConnection = get(blockFace);
                 if (pipeConnection != null) {
                     if (blockFace.equals(start))
                         transferSpeed = (int) Math.max(1, pipeConnection.getPressure().get(true) / 2f);
                     frontier.add(Pair.of(blockFace, pipeConnection));
-                    ArrayList<FluidTransformer> transformers = fluidTransformers.get(blockFace.getPos());
-                    ArrayList<FluidTransformer> adjacentTransformers = fluidTransformers.get(blockFace.getConnectedPos());
+                    ArrayList<FluidTransformer> transformers = $_fluidTransformers.get(blockFace.getPos());
+                    ArrayList<FluidTransformer> adjacentTransformers = $_fluidTransformers.get(blockFace.getConnectedPos());
                     ArrayList<FluidTransformer> reversedList = new ArrayList<>();
                     if (transformers != null && adjacentTransformers != null) {
                         reversedList.addAll(adjacentTransformers);
                         reversedList.addAll(transformers);
-                        fluidTransformers.put(blockFace.getPos(), reversedList);
+                        $_fluidTransformers.put(blockFace.getPos(), reversedList);
                     }
                 }
                 iterator.remove();
@@ -97,15 +97,15 @@ public class PressurizedFluidNetwork {
 
 //			drawDebugOutlines();
 
-            for (Iterator<Pair<BlockFace, PressurizedPipeConnection>> iterator = frontier.iterator(); iterator.hasNext();) {
-                Pair<BlockFace, PressurizedPipeConnection> pair = iterator.next();
+            for (Iterator<Pair<BlockFace, PipeConnection>> iterator = frontier.iterator(); iterator.hasNext();) {
+                Pair<BlockFace, PipeConnection> pair = iterator.next();
                 BlockFace blockFace = pair.getFirst();
-                PressurizedPipeConnection pipeConnection = pair.getSecond();
+                PipeConnection pipeConnection = pair.getSecond();
 
                 if (!pipeConnection.hasFlow())
                     continue;
 
-                PressurizedPipeConnection.Flow flow = pipeConnection.getFlow().get();
+                PipeConnection.Flow flow = ((PipeConnectionAccessor) pipeConnection).getFlow().get();
                 if (!fluid.isEmpty() && flow.fluid.getFluid() != fluid.getFluid()) {//!flow.fluid.isFluidEqual(fluid)) {
                     iterator.remove();
                     continue;
@@ -126,7 +126,7 @@ public class PressurizedFluidNetwork {
                     if (side == blockFace.getFace())
                         continue;
                     BlockFace adjacentLocation = new BlockFace(blockFace.getPos(), side);
-                    PressurizedPipeConnection adjacent = get(adjacentLocation);
+                    PipeConnection adjacent = get(adjacentLocation);
                     if (adjacent == null)
                         continue;
                     if (!adjacent.hasFlow()) {
@@ -135,7 +135,7 @@ public class PressurizedFluidNetwork {
                             canRemove = false;
                         continue;
                     }
-                    PressurizedPipeConnection.Flow outFlow = adjacent.getFlow().get();
+                    PipeConnection.Flow outFlow = ((PipeConnectionAccessor) adjacent).getFlow().get();
                     if (outFlow.inbound) {
                         if (adjacent.comparePressure() > 0)
                             canRemove = false;
@@ -147,14 +147,14 @@ public class PressurizedFluidNetwork {
                     }
 
                     // Give pipe end a chance to init connections
-                    if (!adjacent.getSource().isPresent() && !adjacent.determineSource(world, blockFace.getPos())) {
+                    if (!((PipeConnectionAccessor) adjacent).getSource().isPresent() && !adjacent.determineSource(world, blockFace.getPos())) {
                         canRemove = false;
                         continue;
                     }
 
-                    if (adjacent.getSource().isPresent() && adjacent.getSource().get()
+                    if (((PipeConnectionAccessor) adjacent).getSource().isPresent() && ((PipeConnectionAccessor) adjacent).getSource().get()
                             .isEndpoint()) {
-                        targets.add(Pair.of(adjacentLocation, adjacent.getSource().get()
+                        targets.add(Pair.of(adjacentLocation, ((PipeConnectionAccessor) adjacent).getSource().get()
                                 .provideHandler()));
                         continue;
                     }
@@ -186,10 +186,10 @@ public class PressurizedFluidNetwork {
             if (pair.getSecond()
                     .isPresent() && world.getGameTime() % 40 != 0)
                 continue;
-            PressurizedPipeConnection pipeConnection = get(pair.getFirst());
+            PipeConnection pipeConnection = get(pair.getFirst());
             if (pipeConnection == null)
                 continue;
-            pipeConnection.getSource().ifPresent(fs -> {
+            ((PipeConnectionAccessor) pipeConnection).getSource().ifPresent(fs -> {
                 if (fs.isEndpoint())
                     pair.setSecond(fs.provideHandler());
             });
@@ -199,7 +199,7 @@ public class PressurizedFluidNetwork {
         Map<IFluidHandler, Integer> accumulatedFill = new IdentityHashMap<>();
 
         for (boolean simulate : Iterate.trueAndFalse) {
-            FluidAction action = simulate ? FluidAction.SIMULATE : FluidAction.EXECUTE;
+            IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
 
             IFluidHandler handler = source.orElse(null);
             if (handler == null)
@@ -252,7 +252,7 @@ public class PressurizedFluidNetwork {
                         continue;
                     }
 
-                    ArrayList<FluidTransformer> outputTransformers = fluidTransformers.get(pair.getFirst().getPos());
+                    ArrayList<FluidTransformer> outputTransformers = $_fluidTransformers.get(pair.getFirst().getPos());
                     FluidStack transformerFluid = new FluidStack(transfer, toDrain);
 
                     // Compression loss correction variable
@@ -305,53 +305,12 @@ public class PressurizedFluidNetwork {
         }
     }
 
-//	private void drawDebugOutlines() {
-//		FluidPropagator.showBlockFace(start)
-//			.lineWidth(1 / 8f)
-//			.colored(0xff0000);
-//		for (Pair<BlockFace, LazyOptional<IFluidHandler>> pair : targets)
-//			FluidPropagator.showBlockFace(pair.getFirst())
-//				.lineWidth(1 / 8f)
-//				.colored(0x00ff00);
-//		for (Pair<BlockFace, PressurizedPipeConnection> pair : frontier)
-//			FluidPropagator.showBlockFace(pair.getFirst())
-//				.lineWidth(1 / 4f)
-//				.colored(0xfaaa33);
-//	}
 
-    private void keepPortableFluidInterfaceEngaged() {
-        IFluidHandler handler = source.orElse(null);
-        if (!(handler instanceof InterfaceFluidHandler))
-            return;
-        if (frontier.isEmpty())
-            return;
-        ((InterfaceFluidHandler) handler).keepAlive();
-    }
-
-    public void reset() {
-        frontier.clear();
-        visited.clear();
-        targets.clear();
-        queued.clear();
-        fluid = FluidStack.EMPTY;
-        queued.add(start);
-        pauseBeforePropagation = 2;
-    }
-
-    @Nullable
-    private PressurizedPipeConnection get(BlockFace location) {
-        BlockPos pos = location.getPos();
-        FluidTransportBehaviour fluidTransfer = getFluidTransfer(pos);
-        if (fluidTransfer == null)
-            return null;
-        PipeConnection connection =  fluidTransfer.getConnection(location.getFace());
-        return (connection instanceof PressurizedPipeConnection) ? (PressurizedPipeConnection) connection : null;
-    }
-
-    private boolean isPresent(BlockFace location) {
-        return world.isLoaded(location.getPos());
-    }
-
+    /**
+     * @author Velocity1029/
+     * @reason Used to record fluidTransformers for use in tick
+     */
+    @Overwrite(remap = false)
     @Nullable
     private FluidTransportBehaviour getFluidTransfer(BlockPos pos) {
         WeakReference<FluidTransportBehaviour> weakReference = cache.get(pos);
@@ -360,16 +319,31 @@ public class PressurizedFluidNetwork {
             behaviour = null;
         if (behaviour == null) {
             behaviour = BlockEntityBehaviour.get(world, pos, FluidTransportBehaviour.TYPE);
-            if (behaviour != null)
+            if (behaviour != null) {
                 cache.put(pos, new WeakReference<>(behaviour));
                 ArrayList<FluidTransformer> transformers = new ArrayList<>();
                 if (behaviour instanceof FluidTransformer fluidTransformer) {
                     transformers.add(fluidTransformer);
                 }
-                fluidTransformers.put(pos, transformers);
+                $_fluidTransformers.put(pos, transformers);
+            }
         }
         return behaviour;
     }
 
-}
+    @Shadow()
+    private boolean isPresent(BlockFace location) {
+        throw new IllegalStateException("Mixin failed to shadow isPresent()");
+    }
 
+    @Shadow()
+    @Nullable
+    private PipeConnection get(BlockFace location) {
+        throw new IllegalStateException("Mixin failed to shadow get()");
+    }
+
+    @Shadow()
+    private void keepPortableFluidInterfaceEngaged() {
+        throw new IllegalStateException("Mixin failed to shadow keepPortableFluidInterfaceEngaged()");
+    }
+}

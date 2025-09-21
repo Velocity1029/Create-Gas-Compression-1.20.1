@@ -8,6 +8,8 @@
     "FluidPipeBlockMixin",
     "FluidPropagatorMixin",
     "IHaveGoggleInformationMixin",
+    "FluidNetworkMixin",
+    "PipeConnectionAccessor",
     "PipeConnectionMixin"
   ]
 }

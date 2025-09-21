@@ -4,14 +4,13 @@ import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
-import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.GlassFluidPipeBlock;
 import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.FluidTransformer;
 import com.velocity1029.create_gas_compression.base.IFannable;
-import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
+import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -22,7 +21,7 @@ import net.minecraftforge.fluids.FluidStack;
 
 import java.util.List;
 
-public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity implements IFannable {
+public class CompressedGasCoolerBlockEntity extends IronPipeBlockEntity implements IFannable {
 
     // Fluid Handling
     public boolean shouldCool = false;
@@ -65,7 +64,7 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         return fluid;
     }
 
-    class CoolerFluidTransportBehaviour extends PressurizedFluidTransportBehaviour implements FluidTransformer {
+    class CoolerFluidTransportBehaviour extends PressurizedPipeFluidTransportBehaviour implements FluidTransformer {
 
         public CoolerFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
