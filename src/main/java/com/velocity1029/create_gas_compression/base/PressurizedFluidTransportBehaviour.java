@@ -9,11 +9,8 @@ import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
-import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
-import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.outliner.Outliner;
@@ -27,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 
 import javax.annotation.Nullable;
@@ -257,7 +255,15 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
                         if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
                             // Burst!
                             float strength = fluidTags.getFloat("Pressure");
-                            explosions.put(pos, strength);
+                            if (connectedBlock.hasBlockEntity()
+                                && world.getBlockEntity(connectedPos) instanceof SmartBlockEntity smartBlockEntity
+                                && ((smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE) != null
+                                        && smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE).
+                                            canPullFluidFrom(internalFluid, smartBlockEntity.getBlockState(), connection.side.getOpposite()))
+                                    || smartBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent()))
+                                    explosions.put(connectedPos, strength);
+                            else
+                                explosions.put(pos, strength);
                         }
                     }
 
