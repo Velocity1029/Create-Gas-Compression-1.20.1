@@ -235,10 +235,10 @@ public class PressurizedFluidNetwork {
                 for (Iterator<Pair<BlockFace, LazyOptional<IFluidHandler>>> iterator =
                      availableOutputs.iterator(); iterator.hasNext();) {
                     Pair<BlockFace, LazyOptional<IFluidHandler>> pair = iterator.next();
-                    int toTransfer = dividedTransfer;
+                    int toDrain = dividedTransfer;
 
                     if (remainder > 0) {
-                        toTransfer++;
+                        toDrain++;
                         remainder--;
                     }
 
@@ -252,10 +252,11 @@ public class PressurizedFluidNetwork {
                     }
 
                     ArrayList<FluidTransformer> outputTransformers = fluidTransformers.get(pair.getFirst().getPos());
-                    FluidStack transformerFluid = new FluidStack(transfer, toTransfer);
+                    FluidStack transformerFluid = new FluidStack(transfer, toDrain);
 
                     // Compression loss correction variable
                     int compressionLoss = 0;
+                    int toFill = toDrain;
                     if (outputTransformers != null) {
                         for (FluidTransformer fluidTransformer : outputTransformers) {
                             int preTransformedAmount = transformerFluid.getAmount();
@@ -267,7 +268,7 @@ public class PressurizedFluidNetwork {
                                 compressionLoss += compressionRemainder * ((int) transformerFluid.getTag().getFloat("Pressure") / 2);
                             }
                         }
-                        toTransfer = transformerFluid.getAmount();
+                        toFill = transformerFluid.getAmount();
                     }
 
                     if (transformerFluid.isEmpty()) {
@@ -275,7 +276,7 @@ public class PressurizedFluidNetwork {
                         break;
                     }
 
-                    int simulatedTransfer = toTransfer;
+                    int simulatedTransfer = toFill;
                     if (simulate)
                         simulatedTransfer += accumulatedFill.getOrDefault(targetHandler, 0);
 
@@ -286,12 +287,12 @@ public class PressurizedFluidNetwork {
 
                     if (simulate) {
                         accumulatedFill.put(targetHandler, Integer.valueOf(fill));
-                        fill -= simulatedTransfer - toTransfer;
+                        fill -= simulatedTransfer - toFill;
                     }
 
                     transfer.setAmount(transfer.getAmount() + compressionLoss);
                     if (fill != 0)
-                        transfer.setAmount(transfer.getAmount() - ((dividedTransfer * transformerFluid.getAmount()) / fill));
+                        transfer.setAmount(transfer.getAmount() - ((toDrain * transformerFluid.getAmount()) / fill));
                     if (fill < simulatedTransfer)
                         iterator.remove();
                 }
