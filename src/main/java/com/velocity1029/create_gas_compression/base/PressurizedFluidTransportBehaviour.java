@@ -181,18 +181,25 @@ public abstract class PressurizedFluidTransportBehaviour extends FluidTransportB
                     if (!diffused) {
                         BlockPos connectedPos = pos.relative(connection.side);
                         BlockState connectedBlock = world.getBlockState(connectedPos);
-                        if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
-                            // Burst!
-                            float strength = fluidTags.getFloat("Pressure");
-                            if (connectedBlock.hasBlockEntity()
-                                && world.getBlockEntity(connectedPos) instanceof SmartBlockEntity smartBlockEntity
-                                && ((smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE) != null
-                                        && smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE).
-                                            canPullFluidFrom(internalFluid, smartBlockEntity.getBlockState(), connection.side.getOpposite()))
-                                    || smartBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent()))
-                                    explosions.put(connectedPos, strength);
-                            else
-                                explosions.put(pos, strength);
+
+
+                        float strength = fluidTags.getFloat("Pressure");
+                        // If we are connected to a fluid transporting/handling block
+                        if (connectedBlock.hasBlockEntity()
+                            && world.getBlockEntity(connectedPos) instanceof SmartBlockEntity smartBlockEntity
+                            && ((smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE) != null
+                                && smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE).canHaveFlowToward(smartBlockEntity.getBlockState(), connection.side.getOpposite()))
+                            || smartBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent())) {
+                            // That is not pressurized
+                            if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
+                                // Burst
+                                explosions.put(connectedPos, strength);
+                            }
+                        }
+                        // Otherwise, we are an open-ended pipe
+                        else {
+                            // So burst
+                            explosions.put(pos, strength);
                         }
                     }
 
