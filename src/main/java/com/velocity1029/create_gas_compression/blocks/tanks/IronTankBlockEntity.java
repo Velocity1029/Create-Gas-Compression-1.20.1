@@ -2,14 +2,16 @@ package com.velocity1029.create_gas_compression.blocks.tanks;
 
 import static java.lang.Math.abs;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.simibubi.create.content.fluids.tank.FluidTankBlock;
+import com.simibubi.create.content.fluids.FluidPropagator;
+import com.simibubi.create.content.fluids.FluidTransportBehaviour;
+import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
+import com.velocity1029.create_gas_compression.base.PressurizedFluidDistribution;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlock.Shape;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
@@ -22,12 +24,14 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
+import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
 import net.createmod.catnip.animation.LerpedFloat;
 import net.createmod.catnip.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -43,12 +47,19 @@ import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 
 //public class IronTankBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 
     private static final int MAX_SIZE = 3;
 
+    static final float maxDistance = CreateGasCompressionConfig.getServer().pressurizedFluidRange.get();
+    static final float maxPressure = (float) Math.pow(2, CreateGasCompressionConfig.getServer().maximumPressureStages.get());
+
+    Map<Direction, MutableBoolean> sidesToUpdate;
+    boolean pressureUpdate;
+    protected float fluidInducedPressure;
 //    protected LazyOptional<IFluidHandler> fluidCapability;
 //    protected boolean forceFluidLevelUpdate;
 //    protected FluidTank tankInventory;
@@ -72,6 +83,9 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
 
     public IronTankBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        sidesToUpdate = new HashMap<>();
+        for (Direction direction : Iterate.directions) sidesToUpdate.put(direction, new MutableBoolean(false));
+        fluidInducedPressure = 0;
         tankInventory = createInventory();
         fluidCapability = LazyOptional.of(() -> tankInventory);
         forceFluidLevelUpdate = true;
@@ -123,6 +137,20 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
             fluidLevel.tickChaser();
         if (isController())
             boiler.tick(this);
+
+        if (level.isClientSide && !isVirtual())
+            return;
+
+        if (pressureUpdate) {
+            updatePressureChange();
+        }
+
+        sidesToUpdate.forEach((direction, update) -> {
+            if (update.isFalse())
+                return;
+            update.setFalse();
+            PressurizedFluidDistribution.distributePressureTo(level, worldPosition, direction, fluidInducedPressure, false);
+        });
     }
 
     @Override
@@ -196,6 +224,14 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
                         .startWithValue(getFillState());
             fluidLevel.chase(getFillState(), .5f, Chaser.EXP);
         }
+
+        float oldPressure = fluidInducedPressure;
+        float newPressure = getPressure();
+
+        if (level.isClientSide && !isVirtual())
+            return;
+        if (oldPressure != newPressure)
+            pressureUpdate = true;
     }
 
     protected void setLuminosity(int luminosity) {
@@ -548,5 +584,62 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
     public FluidStack getFluid(int tank) {
         return tankInventory.getFluid()
                 .copy();
+    }
+
+    public float getPressure() {
+        CompoundTag fluidTags = tankInventory.getFluid().getTag();
+        if (!tankInventory.getFluid().isEmpty() &&
+                fluidTags != null &&
+                fluidTags.contains("Pressure", Tag.TAG_FLOAT) &&
+                fluidTags.getFloat("Pressure") > 1)
+            fluidInducedPressure = fluidTags.getFloat("Pressure") / maxPressure * maxDistance;
+        else
+            fluidInducedPressure = 0;
+        return fluidInducedPressure;
+    }
+
+    public void updatePressureChange() {
+        pressureUpdate = false;
+//        FluidPropagator.propagateChangedPipe(level, worldPosition, getBlockState());
+        for (Direction direction : Iterate.directions) {
+            BlockPos pos = worldPosition.relative(direction);
+            FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pos);
+            if (pipe != null) {
+                PipeConnection connection = pipe.getConnection(direction.getOpposite());
+                if (connection != null && connection.getPressure().getSecond() == 0 || connection.getPressure().getFirst() != 0)
+                    FluidPropagator.propagateChangedPipe(level, pos, level.getBlockState(pos));
+            }
+        }
+
+//        FluidTransportBehaviour behaviour = getBehaviour(FluidTransportBehaviour.TYPE);
+//        if (behaviour != null)
+//            behaviour.wipePressure();
+//        wipeAdjacentPressures();
+        sidesToUpdate.forEach((direction, update) -> update.setTrue());
+    }
+
+    public void updatePipesOnSide(Direction side) {
+        MutableBoolean update = sidesToUpdate.get(side);
+        update.setTrue();
+//        wipeAdjacentPressures();
+//        getBehaviour(FluidTransportBehaviour.TYPE).wipePressure();
+    }
+
+    public void wipeAdjacentPressures() {
+        for (Direction direction : Iterate.directions) {
+            BlockEntity entity = level.getBlockEntity(worldPosition.relative(direction));
+            if (entity instanceof SmartBlockEntity smartBlockEntity) {
+                FluidTransportBehaviour behaviour = smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE);
+                if (behaviour != null)
+                    behaviour.wipePressure();
+            }
+        }
+    }
+
+    @Override
+    protected void read(CompoundTag compound, boolean clientPacket) {
+        super.read(compound, clientPacket);
+        getPressure();
+        pressureUpdate = true;
     }
 }

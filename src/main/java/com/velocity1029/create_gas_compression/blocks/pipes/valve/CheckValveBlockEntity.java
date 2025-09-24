@@ -27,7 +27,7 @@ public class CheckValveBlockEntity extends SmartFluidPipeBlockEntity {
         registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
     }
 
-    class CheckValvePipeBehaviour extends PressurizedStraightPipeFluidTransportBehaviour {
+    public class CheckValvePipeBehaviour extends PressurizedStraightPipeFluidTransportBehaviour {
 
         public CheckValvePipeBehaviour(SmartBlockEntity be) {
             super(be);

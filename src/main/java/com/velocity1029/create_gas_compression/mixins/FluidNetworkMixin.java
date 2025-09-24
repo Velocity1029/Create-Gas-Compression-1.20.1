@@ -3,6 +3,7 @@ package com.velocity1029.create_gas_compression.mixins;
 import com.simibubi.create.content.fluids.FluidNetwork;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
+import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.velocity1029.create_gas_compression.base.FluidTransformer;
@@ -12,6 +13,8 @@ import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
@@ -60,6 +63,8 @@ public class FluidNetworkMixin {
     Map<BlockPos, WeakReference<FluidTransportBehaviour>> cache;
     @Unique
     Map<BlockPos, ArrayList<FluidTransformer>> $_fluidTransformers = new HashMap<>();
+    @Unique
+    Map<BlockPos, Boolean> $_pumpedPipes = new HashMap<>();
 
     /**
      * @author Velocity1029/
@@ -83,6 +88,7 @@ public class FluidNetworkMixin {
                     if (blockFace.equals(start))
                         transferSpeed = (int) Math.max(1, pipeConnection.getPressure().get(true) / 2f);
                     frontier.add(Pair.of(blockFace, pipeConnection));
+                    // Record tracked values
                     ArrayList<FluidTransformer> transformers = $_fluidTransformers.get(blockFace.getPos());
                     ArrayList<FluidTransformer> adjacentTransformers = $_fluidTransformers.get(blockFace.getConnectedPos());
                     ArrayList<FluidTransformer> reversedList = new ArrayList<>();
@@ -91,6 +97,8 @@ public class FluidNetworkMixin {
                         reversedList.addAll(transformers);
                         $_fluidTransformers.put(blockFace.getPos(), reversedList);
                     }
+                    Boolean adjacentPumped = $_pumpedPipes.get(blockFace.getConnectedPos());
+                    $_pumpedPipes.put(blockFace.getPos(), (adjacentPumped!=null && adjacentPumped) || $_pumpedPipes.get(blockFace.getPos()));
                 }
                 iterator.remove();
             }
@@ -198,23 +206,46 @@ public class FluidNetworkMixin {
         int flowSpeed = transferSpeed;
         Map<IFluidHandler, Integer> accumulatedFill = new IdentityHashMap<>();
 
+        boolean limitedByEqualization = false;
+        boolean hasPump = false;
+        int maxPressureDrain = 0;
+        int normalizedSourceAmount = 0;
+
         for (boolean simulate : Iterate.trueAndFalse) {
             IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
 
             IFluidHandler handler = source.orElse(null);
             if (handler == null)
                 return;
+            if (limitedByEqualization && !hasPump)
+                flowSpeed = Math.min(maxPressureDrain, flowSpeed);
 
             FluidStack transfer = FluidStack.EMPTY;
+            FluidStack containedFluid = FluidStack.EMPTY;
             for (int i = 0; i < handler.getTanks(); i++) {
                 FluidStack contained = handler.getFluidInTank(i);
                 if (contained.isEmpty())
                     continue;
                 if (!contained.isFluidEqual(fluid))
                     continue;
+                containedFluid = contained;
                 FluidStack toExtract = FluidHelper.copyStackWithAmount(contained, flowSpeed);
                 transfer = handler.drain(toExtract, action);
             }
+            // Used to track ambient pressure normalization
+            float sourcePressure = 1;
+            if (simulate) {
+                normalizedSourceAmount = containedFluid.getAmount();
+                if (containedFluid.hasTag()) {
+                    CompoundTag tags = containedFluid.getTag();
+                    if (tags.contains("Pressure", Tag.TAG_FLOAT)) {
+                        sourcePressure = tags.getFloat("Pressure");
+                        normalizedSourceAmount *= sourcePressure;
+                    }
+                } // By detecting fluid amount differences in source handler against all "unpumped" target handlers
+            }
+            int normalizedAmountDifference = normalizedSourceAmount;
+
 
             if (transfer.isEmpty()) {
                 FluidStack genericExtract = handler.drain(flowSpeed, action);
@@ -232,11 +263,18 @@ public class FluidNetworkMixin {
             while (!availableOutputs.isEmpty() && transfer.getAmount() > 0) {
                 int dividedTransfer = transfer.getAmount() / availableOutputs.size();
                 int remainder = transfer.getAmount() % availableOutputs.size();
+                int pressureEqualizationDifference = (normalizedAmountDifference / 2) / availableOutputs.size();
 
                 for (Iterator<Pair<BlockFace, LazyOptional<IFluidHandler>>> iterator =
                      availableOutputs.iterator(); iterator.hasNext();) {
                     Pair<BlockFace, LazyOptional<IFluidHandler>> pair = iterator.next();
                     int toDrain = dividedTransfer;
+
+                    boolean isFlowPumped = $_pumpedPipes.get(pair.getFirst().getPos());
+                    if (limitedByEqualization && !isFlowPumped && hasPump) {
+                        iterator.remove();
+                        continue;
+                    }
 
                     if (remainder > 0) {
                         toDrain++;
@@ -270,6 +308,32 @@ public class FluidNetworkMixin {
                             }
                         }
                         toFill = transformerFluid.getAmount();
+
+                        if (isFlowPumped) hasPump = true;
+                        // Pressurized tank flow equalization check
+                        if (simulate && !isFlowPumped) {
+
+                            int normalizedTargetAmount = 0;
+                            for (int i = 0; i < targetHandler.getTanks(); i++) {
+                                FluidStack contained = targetHandler.getFluidInTank(i);
+                                if (contained.isEmpty())
+                                    continue;
+                                if (!contained.isFluidEqual(transformerFluid))
+                                    continue;
+                                normalizedTargetAmount = contained.getAmount();
+                                if (contained.hasTag()) {
+                                    CompoundTag tags = contained.getTag();
+                                    if (tags.contains("Pressure", Tag.TAG_FLOAT)) {
+                                        float pressure = tags.getFloat("Pressure");
+                                        normalizedTargetAmount *= pressure;
+                                    }
+                                }
+                            }
+                            normalizedAmountDifference -= normalizedTargetAmount;
+                        }
+                        if (!simulate && !isFlowPumped) {
+                            toFill = Math.min(toFill, pressureEqualizationDifference);
+                        }
                     }
 
                     if (transformerFluid.isEmpty()) {
@@ -300,6 +364,8 @@ public class FluidNetworkMixin {
 
             }
 
+            maxPressureDrain = (int)((normalizedAmountDifference / sourcePressure) / 2);
+            limitedByEqualization = maxPressureDrain < flowSpeed;
             flowSpeed -= transfer.getAmount();
             transfer = FluidStack.EMPTY;
         }
@@ -321,11 +387,14 @@ public class FluidNetworkMixin {
             behaviour = BlockEntityBehaviour.get(world, pos, FluidTransportBehaviour.TYPE);
             if (behaviour != null) {
                 cache.put(pos, new WeakReference<>(behaviour));
+                // Side effect to track fluid transformers along pipeline to the output
                 ArrayList<FluidTransformer> transformers = new ArrayList<>();
                 if (behaviour instanceof FluidTransformer fluidTransformer) {
                     transformers.add(fluidTransformer);
                 }
                 $_fluidTransformers.put(pos, transformers);
+                // Side effect to track if pipeline flow is pumped
+                $_pumpedPipes.put(pos, behaviour.blockEntity instanceof PumpBlockEntity);
             }
         }
         return behaviour;

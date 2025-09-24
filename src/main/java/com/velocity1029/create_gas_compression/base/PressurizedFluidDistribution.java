@@ -5,6 +5,7 @@ import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.pipes.valve.CheckValveBlockEntity;
 import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.data.Pair;
@@ -17,27 +18,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import java.util.*;
 
 public class PressurizedFluidDistribution {
 
-
-
-//    sidesToUpdate.forEachWithContext((update, isFront) -> {
-//        if (update.isFalse())
-//            return;
-//        update.setFalse();
-//        distributePressureTo(isFront ? getFront() : getFront().getOpposite());
-//    });
-
-    public static void distributePressureTo(Level level, BlockPos position, Direction side, Float pressure) {
+    public static void distributePressureTo(Level level, BlockPos position, Direction side, Float pressure, Boolean pull) {
         if (pressure == 0)
             return;
 
         BlockFace start = new BlockFace(position, side);
-        boolean pull = false; // TODO: pull should always be false because we only want to push
+
         Set<BlockFace> targets = new HashSet<>();
         Map<BlockPos, Integer> diffusedPipes = new HashMap<>();
         Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph = new HashMap<>();
@@ -103,8 +96,11 @@ public class PressurizedFluidDistribution {
                     FluidTransportBehaviour pipeBehaviour = FluidPropagator.getPipe(level, connectedPos);
                     if (pipeBehaviour == null)
                         continue;
-//                    if (pipeBehaviour instanceof CompressorCylinderBlockEntity.CompressorFluidTransferBehaviour) TODO delete or uncomment
-//                        continue;
+                    if (pipeBehaviour instanceof CompressorCylinderBlockEntity.CompressorFluidTransferBehaviour) //TODO delete or uncomment
+                        continue;
+                    if (pipeBehaviour instanceof CheckValveBlockEntity.CheckValvePipeBehaviour checkValvePipeBehaviour
+                            && checkValvePipeBehaviour.canPullFluidFrom(FluidStack.EMPTY, level.getBlockState(connectedPos), face))
+                        continue;
                     if (visited.contains(connectedPos))
                         continue;
                     if (distance + 1 >= maxDistance) {

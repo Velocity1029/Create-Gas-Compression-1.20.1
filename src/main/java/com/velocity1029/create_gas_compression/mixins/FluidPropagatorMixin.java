@@ -5,6 +5,7 @@ import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
+import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlockEntity;
 import com.velocity1029.create_gas_compression.registry.CGCBlocks;
 import net.createmod.catnip.data.Pair;
 import net.minecraft.core.BlockPos;
@@ -34,6 +35,7 @@ public class FluidPropagatorMixin {
         List<Pair<Integer, BlockPos>> frontier = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         Set<Pair<PumpBlockEntity, Direction>> discoveredPumps = new HashSet<>();
+        Set<Pair<IronTankBlockEntity, Direction>> discoveredPressureTanks = new HashSet<>();
 
         frontier.add(Pair.of(0, pipePos));
 
@@ -69,6 +71,11 @@ public class FluidPropagatorMixin {
                     discoveredPumps.add(Pair.of((PumpBlockEntity) tileEntity, direction.getOpposite()));
                     continue;
                 }
+                if (tileEntity instanceof IronTankBlockEntity) {
+                    if (!CGCBlocks.IRON_TANK.has(targetState))
+                        continue;
+                    discoveredPressureTanks.add(Pair.of((IronTankBlockEntity) tileEntity, direction.getOpposite()));
+                }
                 if (visited.contains(target))
                     continue;
                 FluidTransportBehaviour targetPipe = getPipe(world, target);
@@ -83,6 +90,8 @@ public class FluidPropagatorMixin {
         }
 
         discoveredPumps.forEach(pair -> pair.getFirst()
+                .updatePipesOnSide(pair.getSecond()));
+        discoveredPressureTanks.forEach(pair -> pair.getFirst()
                 .updatePipesOnSide(pair.getSecond()));
     }
 }

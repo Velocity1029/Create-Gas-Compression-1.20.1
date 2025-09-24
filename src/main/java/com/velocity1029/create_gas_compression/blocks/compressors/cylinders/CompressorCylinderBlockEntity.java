@@ -3,34 +3,26 @@ package com.velocity1029.create_gas_compression.blocks.compressors.cylinders;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
-import com.simibubi.create.content.fluids.pump.PumpBlock;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.base.FluidTransformer;
+import com.velocity1029.create_gas_compression.base.PressurizedFluidDistribution;
 import com.velocity1029.create_gas_compression.base.PressurizedFluidTransportBehaviour;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlockEntity;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlockEntity;
-import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
-import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
 import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
 import javax.annotation.Nullable;
@@ -48,6 +40,7 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity {
 
     public CompressorCylinderBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
+        sidesToUpdate = Couple.create(MutableBoolean::new);
     }
 
     @Override
@@ -159,158 +152,12 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity {
     protected void distributePressureTo(Direction side) {
         if (getSpeed() == 0)
             return;
-
-        BlockFace start = new BlockFace(worldPosition, side);
         boolean pull = isPullingOnSide(isFront(side));
-        Set<BlockFace> targets = new HashSet<>();
-        Map<BlockPos, Integer> diffusedPipes = new HashMap<>();
-        Map<BlockPos, Pair<Integer, Map<Direction, Boolean>>> pipeGraph = new HashMap<>();
-
-        if (!pull)
-            FluidPropagator.resetAffectedFluidNetworks(level, worldPosition, side.getOpposite());
-
-        if (!hasReachedValidEndpoint(level, start, pull)) {
-
-            pipeGraph.computeIfAbsent(worldPosition, $ -> Pair.of(0, new IdentityHashMap<>()))
-                    .getSecond()
-                    .put(side, pull);
-            pipeGraph.computeIfAbsent(start.getConnectedPos(), $ -> Pair.of(1, new IdentityHashMap<>()))
-                    .getSecond()
-                    .put(side.getOpposite(), !pull);
-
-            List<Pair<Integer, BlockPos>> frontier = new ArrayList<>();
-            Set<BlockPos> visited = new HashSet<>();
-            int maxDistance = CreateGasCompressionConfig.getServer().compressorCylinderRange.get();
-            frontier.add(Pair.of(1, start.getConnectedPos()));
-
-            while (!frontier.isEmpty()) {
-                Pair<Integer, BlockPos> entry = frontier.remove(0);
-                int distance = entry.getFirst();
-                BlockPos currentPos = entry.getSecond();
-
-                if (!level.isLoaded(currentPos))
-                    continue;
-                if (visited.contains(currentPos))
-                    continue;
-                visited.add(currentPos);
-                BlockState currentState = level.getBlockState(currentPos);
-                FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, currentPos);
-                if (pipe == null)
-                    continue;
-
-                boolean diffusedConnection = false;
-                int diffusionRatio = 1;
-                if (diffusedPipes.containsKey(currentPos)) {
-                    diffusionRatio *= diffusedPipes.get(currentPos);
-                    diffusedConnection = true;
-                }
-                if (level.getBlockEntity(currentPos) instanceof DiffuserBlockEntity) {
-                    diffusionRatio *= FluidPropagator.getPipeConnections(currentState, pipe).size() - 1;
-                    diffusedConnection = true;
-                }
-                for (Direction face : FluidPropagator.getPipeConnections(currentState, pipe)) {
-                    BlockFace blockFace = new BlockFace(currentPos, face);
-                    BlockPos connectedPos = blockFace.getConnectedPos();
-
-                    if (!level.isLoaded(connectedPos))
-                        continue;
-                    if (blockFace.isEquivalent(start))
-                        continue;
-                    if (hasReachedValidEndpoint(level, blockFace, pull)) {
-                        pipeGraph.computeIfAbsent(currentPos, $ -> Pair.of(distance, new IdentityHashMap<>()))
-                                .getSecond()
-                                .put(face, pull);
-                        targets.add(blockFace);
-                        continue;
-                    }
-
-                    FluidTransportBehaviour pipeBehaviour = FluidPropagator.getPipe(level, connectedPos);
-                    if (pipeBehaviour == null)
-                        continue;
-                    if (pipeBehaviour instanceof CompressorFluidTransferBehaviour)
-                        continue;
-                    if (visited.contains(connectedPos))
-                        continue;
-                    if (distance + 1 >= maxDistance) {
-                        pipeGraph.computeIfAbsent(currentPos, $ -> Pair.of(distance, new IdentityHashMap<>()))
-                                .getSecond()
-                                .put(face, pull);
-                        targets.add(blockFace);
-                        continue;
-                    }
-
-                    pipeGraph.computeIfAbsent(currentPos, $ -> Pair.of(distance, new IdentityHashMap<>()))
-                            .getSecond()
-                            .put(face, pull);
-                    pipeGraph.computeIfAbsent(connectedPos, $ -> Pair.of(distance + 1, new IdentityHashMap<>()))
-                            .getSecond()
-                            .put(face.getOpposite(), !pull);
-                    frontier.add(Pair.of(distance + 1, connectedPos));
-                    if (diffusedConnection) {
-                        diffusedPipes.put(connectedPos, diffusionRatio);
-                    }
-                }
-            }
-        }
-
-        // DFS
-        Map<Integer, Set<BlockFace>> validFaces = new HashMap<>();
-        searchForEndpointRecursively(pipeGraph, targets, validFaces,
-                new BlockFace(start.getPos(), start.getOppositeFace()), pull);
 
         float pressure = Math.abs(getSpeed());
-        for (Set<BlockFace> set : validFaces.values()) {
-            int parallelBranches = Math.max(1, set.size() - 1);
-            for (BlockFace face : set) {
-                BlockPos pipePos = face.getPos();
-                Direction pipeSide = face.getFace();
+        float correctedPressure = pull? pressure : pressure / 2;
 
-                if (pipePos.equals(worldPosition))
-                    continue;
-
-                boolean inbound = pipeGraph.get(pipePos)
-                        .getSecond()
-                        .get(pipeSide);
-                FluidTransportBehaviour pipeBehaviour = FluidPropagator.getPipe(level, pipePos);
-                if (pipeBehaviour == null)
-                    continue;
-                float correctedPressure = pull? pressure : pressure / 2;
-                if (diffusedPipes.containsKey(pipePos)) {
-                    correctedPressure *= diffusedPipes.get(pipePos);
-                }
-                pipeBehaviour.addPressure(pipeSide, inbound, correctedPressure / parallelBranches);
-            }
-        }
-
-    }
-
-    private boolean hasReachedValidEndpoint(LevelAccessor world, BlockFace blockFace, boolean pull) {
-        BlockPos connectedPos = blockFace.getConnectedPos();
-        BlockState connectedState = world.getBlockState(connectedPos);
-        BlockEntity blockEntity = world.getBlockEntity(connectedPos);
-        Direction face = blockFace.getFace();
-
-        // facing a pump
-        if (PumpBlock.isPump(connectedState) && connectedState.getValue(PumpBlock.FACING)
-                .getAxis() == face.getAxis() && blockEntity instanceof CompressorCylinderBlockEntity cylinderBE) {
-            return cylinderBE.isPullingOnSide(cylinderBE.isFront(blockFace.getOppositeFace())) != pull;
-        }
-
-        // other pipe, no endpoint
-        FluidTransportBehaviour pipe = FluidPropagator.getPipe(world, connectedPos);
-        if (pipe != null && pipe.canHaveFlowToward(connectedState, blockFace.getOppositeFace()))
-            return false;
-
-        // fluid handler endpoint
-        if (blockEntity != null) {
-            LazyOptional<IFluidHandler> capability =
-                    blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, face.getOpposite());
-            if (capability.isPresent())
-                return true;
-        }
-
-        // open endpoint
-        return FluidPropagator.isOpenEnd(world, blockFace.getPos(), face);
+        PressurizedFluidDistribution.distributePressureTo(level, worldPosition, side, correctedPressure, pull);
     }
 
     public void updatePipesOnSide(Direction side) {
@@ -348,7 +195,6 @@ public class CompressorCylinderBlockEntity extends PumpBlockEntity {
 
         public CompressorFluidTransferBehaviour(SmartBlockEntity be) {
             super(be);
-            sidesToUpdate = Couple.create(MutableBoolean::new);
         }
 
         @Override
