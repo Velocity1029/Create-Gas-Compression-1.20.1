@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class CompressorCylinderBlock extends PumpBlock {
 
-    public static final EnumProperty<Direction> ATTACHED_FACE = DirectionProperty.create("attached", Direction.values());
+    public static final EnumProperty<Direction> ATTACHED_FACE = DirectionProperty.create("attached", Direction.Plane.HORIZONTAL);
 
     public CompressorCylinderBlock(Properties pProperties) {
         super(pProperties);
@@ -107,11 +107,6 @@ public class CompressorCylinderBlock extends PumpBlock {
 //        return CGCBlocks.COMPRESSOR_CYLINDER.getDefaultState()
 //                .setValue(CompressorCylinderBlock.AXIS, stateForPlacement.getValue(CompressorCylinderBlock.AXIS))
 //                .setValue(WATERLOGGED, stateForPlacement.getValue(WATERLOGGED));
-//    }
-
-//    @Override
-//    public Class<CompressorGuideBlockEntity> getBlockEntityClass() {
-//        return CompressorGuideBlockEntity.class;
 //    }
 
 //    @Override

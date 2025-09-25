@@ -14,11 +14,11 @@ import com.simibubi.create.content.decoration.encasing.CasingBlock;
 import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
 import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
-import com.simibubi.create.content.fluids.pipes.SmartFluidPipeGenerator;
 import com.simibubi.create.content.fluids.tank.FluidTankMovementBehavior;
 import com.simibubi.create.foundation.data.*;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderBlock;
+import com.velocity1029.create_gas_compression.blocks.compressors.cylinders.CompressorCylinderGenerator;
 import com.velocity1029.create_gas_compression.blocks.compressors.frames.CompressorFrameBlock;
 import com.velocity1029.create_gas_compression.blocks.compressors.guides.CompressorGuideBlock;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlock;
@@ -144,7 +144,7 @@ public class CGCBlocks {
                     .properties(p -> p.mapColor(MapColor.METAL))
                     .transform(pickaxeOnly())
                     .transform(isPressurized())
-                    .blockstate(BlockStateGen.directionalBlockProviderIgnoresWaterlogged(true))
+                    .blockstate(new CompressorCylinderGenerator()::generate)
                     .simpleItem()
                     .lang("Compressor Cylinder")
                     .register();
