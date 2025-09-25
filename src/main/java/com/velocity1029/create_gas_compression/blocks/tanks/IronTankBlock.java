@@ -4,11 +4,11 @@ import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.fluids.transfer.GenericItemEmptying;
 import com.simibubi.create.content.fluids.transfer.GenericItemFilling;
-import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.ComparatorUtil;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.fluid.FluidHelper.FluidExchange;
+import com.velocity1029.create_gas_compression.base.FluidTankBlockEntityAccessor;
 import com.velocity1029.create_gas_compression.registry.CGCBlockEntities;
 import net.createmod.catnip.lang.Lang;
 import net.minecraft.core.BlockPos;
@@ -108,9 +108,12 @@ public class IronTankBlock extends Block implements IWrenchable, IBE<IronTankBlo
         if (tankAt == null || !tankAt.hasLevel())
             return 0;
         IronTankBlockEntity controllerBE = tankAt.getControllerBE();
-        if (controllerBE == null || !controllerBE.window)
+        if (controllerBE == null || (controllerBE instanceof FluidTankBlockEntityAccessor accessorBE && !accessorBE.getWindow()))
             return 0;
-        return tankAt.luminosity;
+        if (tankAt instanceof FluidTankBlockEntityAccessor accessorAt)
+            return accessorAt.getLuminosity();
+        else
+            return 0;
     }
 
     @Override
