@@ -12,8 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CGCPartialModels {
-    public static final PartialModel NATURAL_GAS_COMPRESSOR = block("andesite_chunk_loader/core_active"),
-            STATION_ATTACHMENT = block("station_attachment"),
+    public static final PartialModel
             PIPE_CASING = block("iron_pipe/casing");
 
     private static PartialModel block(String path) {

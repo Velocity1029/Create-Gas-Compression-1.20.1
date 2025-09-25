@@ -4,37 +4,31 @@ import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
-import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.GlassFluidPipeBlock;
 import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.velocity1029.create_gas_compression.base.FluidTransformer;
 import com.velocity1029.create_gas_compression.base.IFannable;
+import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 
-public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity implements IFannable {
+public class CompressedGasCoolerBlockEntity extends IronPipeBlockEntity implements IFannable {
 
     // Fluid Handling
-    private final CoolingTank tank;
+    public boolean shouldCool = false;
     private int coolCounter = 0;
 
     public CompressedGasCoolerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        tank = new CoolingTank();
     }
 
     @Override
@@ -44,21 +38,13 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
         registerAwardables(behaviours, FluidPropagator.getSharedTriggers());
     }
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return LazyOptional.of(() -> tank).cast();
-        return super.getCapability(cap, side);
-    }
-
     @Override
     public void tick() {
         super.tick();
-        if (tank.shouldCool) {
+        if (shouldCool) {
             coolCounter--;
             if (coolCounter <= 0) {
-                tank.shouldCool = false;
+                shouldCool = false;
             }
         }
     }
@@ -66,78 +52,33 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
     @Override
     public void fan(AirCurrent airCurrent) {
         float speed = airCurrent.source.getSpeed();
-        tank.shouldCool = true;
+        shouldCool = true;
         coolCounter = 5;
-        coolFluid(tank.getFluid());
     }
 
-    protected static FluidStack coolFluid(FluidStack fluid) {
-        if (fluid.isEmpty() || !fluid.hasTag()) return fluid;
+    public FluidStack coolFluid(FluidStack fluid) {
+        if (fluid.isEmpty() || !fluid.hasTag() || !shouldCool) return fluid;
         CompoundTag tags = fluid.getTag();
         boolean hot = tags.contains("Hot") && tags.getBoolean("Hot");
         tags.putBoolean("Hot", false);
         return fluid;
     }
 
-    private static class CoolingTank extends FluidTank {
-        public boolean shouldCool;
-
-        public CoolingTank() {
-            super(1000);
-        }
-
-        @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            if (!resource.isEmpty() && this.isFluidValid(resource)) {
-                if (action.simulate()) {
-                    if (this.fluid.isEmpty()) {
-                        return Math.min(this.capacity, resource.getAmount());
-                    } else {
-                        return this.fluid.getFluid() != resource.getFluid() ? 0 : Math.min(this.capacity - this.fluid.getAmount(), resource.getAmount());
-                    }
-                } else if (this.fluid.isEmpty()) {
-                    this.fluid = coolFluid(new FluidStack(resource, Math.min(this.capacity, resource.getAmount())));
-                    this.onContentsChanged();
-                    return this.fluid.getAmount();
-                } else if (this.fluid.getFluid() != resource.getFluid()) {
-                    return 0;
-                } else {
-                    int filled = this.capacity - this.fluid.getAmount();
-                    if (resource.getAmount() < filled) {
-                        this.fluid.grow(resource.getAmount());
-                        filled = resource.getAmount();
-                    } else {
-                        this.fluid.setAmount(this.capacity);
-                    }
-
-                    if (filled > 0) {
-                        this.onContentsChanged();
-                    }
-
-                    return filled;
-                }
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    class CoolerFluidTransportBehaviour extends FluidTransportBehaviour {
+    class CoolerFluidTransportBehaviour extends PressurizedPipeFluidTransportBehaviour implements FluidTransformer {
 
         public CoolerFluidTransportBehaviour(SmartBlockEntity be) {
             super(be);
         }
 
         @Override
-        public FluidStack getProvidedOutwardFluid(Direction side) {
-            FluidStack superFluid = super.getProvidedOutwardFluid(side);
-            return coolFluid(superFluid);
+        public FluidStack transformFluid(FluidStack fluid) {
+            return coolFluid(fluid);
         }
 
         @Override
-        public boolean canHaveFlowToward(BlockState state, Direction direction) {
-            return (FluidPipeBlock.isPipe(state) || state.getBlock() instanceof EncasedPipeBlock)
-                    && state.getValue(FluidPipeBlock.PROPERTY_BY_DIRECTION.get(direction));
+        public FluidStack getProvidedOutwardFluid(Direction side) {
+            FluidStack superFluid = super.getProvidedOutwardFluid(side);
+            return coolFluid(superFluid.copy());
         }
 
         @Override
@@ -172,6 +113,5 @@ public class CompressedGasCoolerBlockEntity extends FluidPipeBlockEntity impleme
 
             return attachment;
         }
-
     }
 }

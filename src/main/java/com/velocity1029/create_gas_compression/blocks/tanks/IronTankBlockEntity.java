@@ -2,86 +2,55 @@ package com.velocity1029.create_gas_compression.blocks.tanks;
 
 import static java.lang.Math.abs;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.simibubi.create.content.fluids.tank.FluidTankBlock;
+import com.simibubi.create.content.fluids.FluidPropagator;
+import com.simibubi.create.content.fluids.FluidTransportBehaviour;
+import com.simibubi.create.content.fluids.PipeConnection;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
+import com.velocity1029.create_gas_compression.base.PressurizedFluidDistribution;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlock.Shape;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.content.fluids.tank.BoilerData;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
-import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
+import com.velocity1029.create_gas_compression.config.CreateGasCompressionConfig;
+import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.IFluidTank;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 
-//public class IronTankBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 
-    private static final int MAX_SIZE = 3;
+    static final float maxDistance = CreateGasCompressionConfig.getServer().pressurizedFluidRange.get();
+    static final float maxPressure = (float) Math.pow(2, CreateGasCompressionConfig.getServer().maximumPressureStages.get());
 
-//    protected LazyOptional<IFluidHandler> fluidCapability;
-//    protected boolean forceFluidLevelUpdate;
-//    protected FluidTank tankInventory;
-//    protected BlockPos controller;
-//    protected BlockPos lastKnownPos;
-//    protected boolean updateConnectivity;
-//    protected boolean updateCapability;
-    protected boolean window;
-    protected int luminosity;
-//    protected int width;
-//    protected int height;
-
-//    public BoilerData boiler;
-
-    private static final int SYNC_RATE = 8;
-//    protected int syncCooldown;
-//    protected boolean queuedSync;
-
-    // For rendering purposes only
-    private LerpedFloat fluidLevel;
+    Map<Direction, MutableBoolean> sidesToUpdate;
+    boolean pressureUpdate;
+    protected float fluidInducedPressure;
 
     public IronTankBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        sidesToUpdate = new HashMap<>();
+        for (Direction direction : Iterate.directions) sidesToUpdate.put(direction, new MutableBoolean(false));
+        fluidInducedPressure = 0;
         tankInventory = createInventory();
         fluidCapability = LazyOptional.of(() -> tankInventory);
-        forceFluidLevelUpdate = true;
-        updateConnectivity = false;
-        updateCapability = false;
-        window = true;
-        height = 1;
-        width = 1;
-        boiler = new BoilerData();
-        refreshCapability();
     }
 
     protected SmartFluidTank createInventory() {
@@ -100,111 +69,32 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
     @Override
     public void tick() {
         super.tick();
-        if (syncCooldown > 0) {
-            syncCooldown--;
-            if (syncCooldown == 0 && queuedSync)
-                sendData();
+
+        if (pressureUpdate) {
+            updatePressureChange();
         }
 
-        if (lastKnownPos == null)
-            lastKnownPos = getBlockPos();
-        else if (!lastKnownPos.equals(worldPosition) && worldPosition != null) {
-            onPositionChanged();
-            return;
-        }
-
-        if (updateCapability) {
-            updateCapability = false;
-            refreshCapability();
-        }
-        if (updateConnectivity)
-            updateConnectivity();
-        if (fluidLevel != null)
-            fluidLevel.tickChaser();
-        if (isController())
-            boiler.tick(this);
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (isController())
-            boiler.updateOcclusion(this);
-    }
-
-    @Override
-    public BlockPos getLastKnownPos() {
-        return lastKnownPos;
-    }
-
-    @Override
-    public boolean isController() {
-        return controller == null || worldPosition.getX() == controller.getX()
-                && worldPosition.getY() == controller.getY() && worldPosition.getZ() == controller.getZ();
-    }
-
-    @Override
-    public void initialize() {
-        super.initialize();
-        sendData();
-        if (level.isClientSide)
-            invalidateRenderBoundingBox();
-    }
-
-    private void onPositionChanged() {
-        removeController(true);
-        lastKnownPos = worldPosition;
+        sidesToUpdate.forEach((direction, update) -> {
+            if (update.isFalse())
+                return;
+            update.setFalse();
+            PressurizedFluidDistribution.distributePressureTo(level, worldPosition, direction, fluidInducedPressure, false);
+        });
     }
 
     protected void onFluidStackChanged(FluidStack newFluidStack) {
         if (!hasLevel())
             return;
 
-        FluidType attributes = newFluidStack.getFluid()
-                .getFluidType();
-        int luminosity = (int) (attributes.getLightLevel(newFluidStack) / 1.2f);
-        boolean reversed = attributes.isLighterThanAir();
-        int maxY = (int) ((getFillState() * height) + 1);
+        super.onFluidStackChanged(newFluidStack);
 
-        for (int yOffset = 0; yOffset < height; yOffset++) {
-            boolean isBright = reversed ? (height - yOffset <= maxY) : (yOffset < maxY);
-            int actualLuminosity = isBright ? luminosity : luminosity > 0 ? 1 : 0;
+        float oldPressure = fluidInducedPressure;
+        float newPressure = getPressure();
 
-            for (int xOffset = 0; xOffset < width; xOffset++) {
-                for (int zOffset = 0; zOffset < width; zOffset++) {
-                    BlockPos pos = this.worldPosition.offset(xOffset, yOffset, zOffset);
-                    IronTankBlockEntity tankAt = ConnectivityHandler.partAt(getType(), level, pos);
-                    if (tankAt == null)
-                        continue;
-                    level.updateNeighbourForOutputSignal(pos, tankAt.getBlockState()
-                            .getBlock());
-                    if (tankAt.luminosity == actualLuminosity)
-                        continue;
-                    tankAt.setLuminosity(actualLuminosity);
-                }
-            }
-        }
-
-        if (!level.isClientSide) {
-            setChanged();
-            sendData();
-        }
-
-        if (isVirtual()) {
-            if (fluidLevel == null)
-                fluidLevel = LerpedFloat.linear()
-                        .startWithValue(getFillState());
-            fluidLevel.chase(getFillState(), .5f, Chaser.EXP);
-        }
-    }
-
-    protected void setLuminosity(int luminosity) {
-        if (level.isClientSide)
+        if (level.isClientSide && !isVirtual())
             return;
-        if (this.luminosity == luminosity)
-            return;
-        this.luminosity = luminosity;
-        sendData();
+        if (oldPressure != newPressure)
+            pressureUpdate = true;
     }
 
     @SuppressWarnings("unchecked")
@@ -216,74 +106,6 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
         if (blockEntity instanceof IronTankBlockEntity)
             return (IronTankBlockEntity) blockEntity;
         return null;
-    }
-
-    public void applyFluidTankSize(int blocks) {
-        tankInventory.setCapacity(blocks * getCapacityMultiplier());
-        int overflow = tankInventory.getFluidAmount() - tankInventory.getCapacity();
-        if (overflow > 0)
-            tankInventory.drain(overflow, FluidAction.EXECUTE);
-        forceFluidLevelUpdate = true;
-    }
-
-    public void removeController(boolean keepFluids) {
-        if (level.isClientSide)
-            return;
-        updateConnectivity = true;
-        if (!keepFluids)
-            applyFluidTankSize(1);
-        controller = null;
-        width = 1;
-        height = 1;
-        boiler.clear();
-        onFluidStackChanged(tankInventory.getFluid());
-
-        BlockState state = getBlockState();
-        if (IronTankBlock.isTank(state)) {
-            state = state.setValue(IronTankBlock.BOTTOM, true);
-            state = state.setValue(IronTankBlock.TOP, true);
-            state = state.setValue(IronTankBlock.SHAPE, window ? IronTankBlock.Shape.WINDOW : Shape.PLAIN);
-            getLevel().setBlock(worldPosition, state, 22);
-        }
-
-        refreshCapability();
-        setChanged();
-        sendData();
-    }
-
-    public void toggleWindows() {
-        IronTankBlockEntity be = getControllerBE();
-        if (be == null)
-            return;
-        if (be.boiler.isActive())
-            return;
-        be.setWindows(!be.window);
-    }
-
-    public void updateBoilerTemperature() {
-        IronTankBlockEntity be = getControllerBE();
-        if (be == null)
-            return;
-        if (!be.boiler.isActive())
-            return;
-        be.boiler.needsHeatLevelUpdate = true;
-    }
-
-    public void sendDataImmediately() {
-        syncCooldown = 0;
-        queuedSync = false;
-        sendData();
-    }
-
-    @Override
-    public void sendData() {
-        if (syncCooldown > 0) {
-            queuedSync = true;
-            return;
-        }
-        super.sendData();
-        queuedSync = false;
-        syncCooldown = SYNC_RATE;
     }
 
     public void setWindows(boolean window) {
@@ -299,15 +121,15 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
 
                     Shape shape = Shape.PLAIN;
                     if (window) {
-                        // SIZE 1: Every tank has a window
-                        if (width == 1)
+                        // SIZE 1: Middle height tank has a window
+                        if (width == 1 && yOffset == height / 2)
                             shape = Shape.WINDOW;
-                        // SIZE 2: Every tank has a corner window
-                        if (width == 2)
-                            shape = xOffset == 0 ? zOffset == 0 ? Shape.WINDOW_NW : Shape.WINDOW_SW
-                                    : zOffset == 0 ? Shape.WINDOW_NE : Shape.WINDOW_SE;
+                        // SIZE 2: No windows
+//                        if (width == 2)
+//                            shape = xOffset == 0 ? zOffset == 0 ? Shape.WINDOW_NW : Shape.WINDOW_SW
+//                                    : zOffset == 0 ? Shape.WINDOW_NE : Shape.WINDOW_SE;
                         // SIZE 3: Tanks in the center have a window
-                        if (width == 3 && abs(abs(xOffset) - abs(zOffset)) == 1)
+                        if (width == 3 && abs(abs(xOffset) - abs(zOffset)) == 1 && yOffset == height / 2 )
                             shape = Shape.WINDOW;
                     }
 
@@ -320,67 +142,6 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
         }
     }
 
-    public void updateBoilerState() {
-        if (!isController())
-            return;
-
-        boolean wasBoiler = boiler.isActive();
-        boolean changed = boiler.evaluate(this);
-
-        if (wasBoiler != boiler.isActive()) {
-            if (boiler.isActive())
-                setWindows(false);
-
-            for (int yOffset = 0; yOffset < height; yOffset++)
-                for (int xOffset = 0; xOffset < width; xOffset++)
-                    for (int zOffset = 0; zOffset < width; zOffset++)
-                        if (level.getBlockEntity(
-                                worldPosition.offset(xOffset, yOffset, zOffset)) instanceof IronTankBlockEntity fbe)
-                            fbe.refreshCapability();
-        }
-
-        if (changed) {
-            notifyUpdate();
-            boiler.checkPipeOrganAdvancement(this);
-        }
-    }
-
-    @Override
-    public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
-            return;
-        if (controller.equals(this.controller))
-            return;
-        this.controller = controller;
-        refreshCapability();
-        setChanged();
-        sendData();
-    }
-
-    private void refreshCapability() {
-        LazyOptional<IFluidHandler> oldCap = fluidCapability;
-        fluidCapability = LazyOptional.of(this::handlerForCapability);
-        oldCap.invalidate();
-    }
-
-    private IFluidHandler handlerForCapability() {
-        return isController() ? boiler.isActive() ? boiler.createHandler() : tankInventory
-                : getControllerBE() != null ? getControllerBE().handlerForCapability() : new FluidTank(0);
-    }
-
-    @Override
-    public BlockPos getController() {
-        return isController() ? worldPosition : controller;
-    }
-
-    @Override
-    protected AABB createRenderBoundingBox() {
-        if (isController())
-            return super.createRenderBoundingBox().expandTowards(width - 1, height - 1, width - 1);
-        else
-            return super.createRenderBoundingBox();
-    }
-
     @Nullable
     public IronTankBlockEntity getOtherIronTankBlockEntity(Direction direction) {
         BlockEntity otherBE = level.getBlockEntity(worldPosition.relative(direction));
@@ -390,65 +151,8 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
     }
 
     @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        IronTankBlockEntity controllerBE = getControllerBE();
-        if (controllerBE == null)
-            return false;
-        return containedFluidTooltip(tooltip, isPlayerSneaking,
-                controllerBE.getCapability(ForgeCapabilities.FLUID_HANDLER));
-    }
-
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (!fluidCapability.isPresent())
-            refreshCapability();
-        if (cap == ForgeCapabilities.FLUID_HANDLER)
-            return fluidCapability.cast();
-        return super.getCapability(cap, side);
-    }
-
-    @Override
-    public void invalidate() {
-        super.invalidate();
-    }
-
-    @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) { //TODO advancements
         registerAwardables(behaviours, AllAdvancements.STEAM_ENGINE_MAXED, AllAdvancements.PIPE_ORGAN);
-    }
-
-    public FluidTank getTankInventory() {
-        return tankInventory;
-    }
-
-    public int getTotalTankSize() {
-        return width * width * height;
-    }
-
-    public static int getMaxSize() {
-        return MAX_SIZE;
-    }
-
-    public static int getCapacityMultiplier() {
-        return AllConfigs.server().fluids.fluidTankCapacity.get() * 1000;
-    }
-
-    public static int getMaxHeight() {
-        return AllConfigs.server().fluids.fluidTankMaxHeight.get();
-    }
-
-    public LerpedFloat getFluidLevel() {
-        return fluidLevel;
-    }
-
-    public void setFluidLevel(LerpedFloat fluidLevel) {
-        this.fluidLevel = fluidLevel;
-    }
-
-    @Override
-    public void preventConnectivityUpdate() {
-        updateConnectivity = false;
     }
 
     @Override
@@ -466,87 +170,54 @@ public class IronTankBlockEntity extends FluidTankBlockEntity implements IHaveGo
         setChanged();
     }
 
-    @Override
-    public void setExtraData(@Nullable Object data) {
-        if (data instanceof Boolean)
-            window = (boolean) data;
+    public float getPressure() {
+        CompoundTag fluidTags = tankInventory.getFluid().getTag();
+        if (!tankInventory.getFluid().isEmpty() &&
+                fluidTags != null &&
+                fluidTags.contains("Pressure", Tag.TAG_FLOAT) &&
+                fluidTags.getFloat("Pressure") > 1)
+            fluidInducedPressure = fluidTags.getFloat("Pressure") / maxPressure * maxDistance;
+        else
+            fluidInducedPressure = 0;
+        return fluidInducedPressure;
     }
 
-    @Override
-    @Nullable
-    public Object getExtraData() {
-        return window;
-    }
-
-    @Override
-    public Object modifyExtraData(Object data) {
-        if (data instanceof Boolean windows) {
-            windows |= window;
-            return windows;
+    public void updatePressureChange() {
+        pressureUpdate = false;
+//        FluidPropagator.propagateChangedPipe(level, worldPosition, getBlockState());
+        for (Direction direction : Iterate.directions) {
+            BlockPos pos = worldPosition.relative(direction);
+            FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pos);
+            if (pipe != null) {
+                PipeConnection connection = pipe.getConnection(direction.getOpposite());
+                if (connection != null && connection.getPressure().getSecond() == 0 || connection.getPressure().getFirst() != 0)
+                    FluidPropagator.propagateChangedPipe(level, pos, level.getBlockState(pos));
+            }
         }
-        return data;
+        sidesToUpdate.forEach((direction, update) -> update.setTrue());
+    }
+
+    public void updatePipesOnSide(Direction side) {
+        MutableBoolean update = sidesToUpdate.get(side);
+        update.setTrue();
+//        wipeAdjacentPressures();
+    }
+
+    public void wipeAdjacentPressures() {
+        for (Direction direction : Iterate.directions) {
+            BlockEntity entity = level.getBlockEntity(worldPosition.relative(direction));
+            if (entity instanceof SmartBlockEntity smartBlockEntity) {
+                FluidTransportBehaviour behaviour = smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE);
+                if (behaviour != null)
+                    behaviour.wipePressure();
+            }
+        }
     }
 
     @Override
-    public Direction.Axis getMainConnectionAxis() {
-        return Direction.Axis.Y;
-    }
-
-    @Override
-    public int getMaxLength(Direction.Axis longAxis, int width) {
-        if (longAxis == Direction.Axis.Y)
-            return getMaxHeight();
-        return getMaxWidth();
-    }
-
-    @Override
-    public int getMaxWidth() {
-        return MAX_SIZE;
-    }
-
-    @Override
-    public int getHeight() {
-        return height;
-    }
-
-    @Override
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    @Override
-    public int getWidth() {
-        return width;
-    }
-
-    @Override
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    @Override
-    public boolean hasTank() {
-        return true;
-    }
-
-    @Override
-    public int getTankSize(int tank) {
-        return getCapacityMultiplier();
-    }
-
-    @Override
-    public void setTankSize(int tank, int blocks) {
-        applyFluidTankSize(blocks);
-    }
-
-    @Override
-    public IFluidTank getTank(int tank) {
-        return tankInventory;
-    }
-
-    @Override
-    public FluidStack getFluid(int tank) {
-        return tankInventory.getFluid()
-                .copy();
+    protected void read(CompoundTag compound, boolean clientPacket) {
+        super.read(compound, clientPacket);
+        getPressure();
+        pressureUpdate = true;
     }
 }

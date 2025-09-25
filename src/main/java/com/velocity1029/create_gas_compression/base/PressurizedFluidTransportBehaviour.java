@@ -1,85 +1,32 @@
 package com.velocity1029.create_gas_compression.base;
 
-import com.simibubi.create.AllSpecialTextures;
-import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidReactions;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.fluids.PipeConnection;
-import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.velocity1029.create_gas_compression.blocks.diffuser.DiffuserBlockEntity;
-import com.velocity1029.create_gas_compression.blocks.pipes.GlassIronPipeBlock;
-import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.registry.CGCTags;
-import net.createmod.catnip.math.VecHelper;
 import net.createmod.catnip.outliner.Outliner;
 import net.createmod.catnip.theme.Color;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
-import org.joml.Vector3d;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.function.Predicate;
 
-public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
-
-    public static final BehaviourType<PressurizedFluidTransportBehaviour> TYPE = new BehaviourType<>();
+public abstract class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour {
 
     public PressurizedFluidTransportBehaviour(SmartBlockEntity be) {
         super(be);
-    }
-
-    @Override
-    public boolean canHaveFlowToward(BlockState state, Direction direction) {
-        return (IronPipeBlock.isPipe(state) || state.getBlock() instanceof EncasedPipeBlock)
-                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction));
-    }
-
-    @Override
-    public AttachmentTypes getRenderedRimAttachment(BlockAndTintGetter world, BlockPos pos, BlockState state,
-                                                    Direction direction) {
-        AttachmentTypes attachment = super.getRenderedRimAttachment(world, pos, state, direction);
-
-        BlockPos offsetPos = pos.relative(direction);
-        BlockState otherState = world.getBlockState(offsetPos);
-
-        if (state.getBlock() instanceof EncasedPipeBlock && attachment != AttachmentTypes.DRAIN)
-            return AttachmentTypes.NONE;
-
-        if (attachment == AttachmentTypes.RIM) {
-            if (!IronPipeBlock.isPipe(otherState) && !(otherState.getBlock() instanceof EncasedPipeBlock)
-                    && !(otherState.getBlock() instanceof GlassIronPipeBlock)) {
-                PressurizedFluidTransportBehaviour pipeBehaviour =
-                        BlockEntityBehaviour.get(world, offsetPos, PressurizedFluidTransportBehaviour.TYPE);
-                if (pipeBehaviour != null && pipeBehaviour.canHaveFlowToward(otherState, direction.getOpposite()))
-                    return AttachmentTypes.DETAILED_CONNECTION;
-            }
-
-            if (!IronPipeBlock.shouldDrawRim(world, pos, state, direction))
-                return FluidPropagator.getStraightPipeAxis(state) == direction.getAxis()
-                        ? AttachmentTypes.CONNECTION
-                        : AttachmentTypes.DETAILED_CONNECTION;
-        }
-
-        if (attachment == AttachmentTypes.NONE
-                && state.getValue(IronPipeBlock.PROPERTY_BY_DIRECTION.get(direction)))
-            return AttachmentTypes.DETAILED_CONNECTION;
-
-        return attachment;
     }
 
 	public void visualizePressure(PipeConnection connection, BlockPos pos) {
@@ -152,7 +99,6 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
 
     @Override
     public void tick() {
-        super.tick();
         Level world = getWorld();
         BlockPos pos = getPos();
         boolean onServer = !world.isClientSide || blockEntity.isVirtual();
@@ -235,10 +181,25 @@ public class PressurizedFluidTransportBehaviour extends FluidTransportBehaviour 
                     if (!diffused) {
                         BlockPos connectedPos = pos.relative(connection.side);
                         BlockState connectedBlock = world.getBlockState(connectedPos);
-                        if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
-                            // Burst!
-                            float strength = fluidTags.getFloat("Pressure");
-                            explosions.put(connectedPos, strength);
+
+
+                        float strength = fluidTags.getFloat("Pressure");
+                        // If we are connected to a fluid transporting/handling block
+                        if (connectedBlock.hasBlockEntity()
+                            && world.getBlockEntity(connectedPos) instanceof SmartBlockEntity smartBlockEntity
+                            && ((smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE) != null
+                                && smartBlockEntity.getBehaviour(FluidTransportBehaviour.TYPE).canHaveFlowToward(smartBlockEntity.getBlockState(), connection.side.getOpposite()))
+                            || smartBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent())) {
+                            // That is not pressurized
+                            if (!connectedBlock.is(CGCTags.CGCBlockTags.PRESSURIZED.tag)) {
+                                // Burst
+                                explosions.put(connectedPos, strength);
+                            }
+                        }
+                        // Otherwise, we are an open-ended pipe
+                        else {
+                            // So burst
+                            explosions.put(pos, strength);
                         }
                     }
 

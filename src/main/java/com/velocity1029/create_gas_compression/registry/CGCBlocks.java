@@ -14,6 +14,7 @@ import com.simibubi.create.content.decoration.encasing.CasingBlock;
 import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
 import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
 import com.simibubi.create.content.fluids.pipes.EncasedPipeBlock;
+import com.simibubi.create.content.fluids.pipes.SmartFluidPipeGenerator;
 import com.simibubi.create.content.fluids.tank.FluidTankMovementBehavior;
 import com.simibubi.create.foundation.data.*;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -27,6 +28,8 @@ import com.velocity1029.create_gas_compression.blocks.heat_exchanger.CompressedG
 import com.velocity1029.create_gas_compression.blocks.pipes.EncasedIronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeBlock;
 import com.velocity1029.create_gas_compression.blocks.pipes.IronPipeAttachmentModel;
+import com.velocity1029.create_gas_compression.blocks.pipes.valve.CheckValveBlock;
+import com.velocity1029.create_gas_compression.blocks.pipes.valve.CheckValveGenerator;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankBlock;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankGenerator;
 import com.velocity1029.create_gas_compression.blocks.tanks.IronTankItem;
@@ -189,6 +192,18 @@ public class CGCBlocks {
                     .transform(isPressurized())
                     .simpleItem()
                     .lang("Diffuser")
+                    .register();
+
+    public static final BlockEntry<CheckValveBlock> CHECK_VALVE =
+            REGISTRATE.block("check_valve", CheckValveBlock::new)
+                    .initialProperties(() -> Blocks.IRON_BLOCK)
+                    .transform(pickaxeOnly())
+                    .transform(isPressurized())
+                    .blockstate(new CheckValveGenerator()::generate)
+                    .onRegister( CreateRegistrate.blockModel(() -> IronPipeAttachmentModel::withAO))
+                    .item()
+                    .transform(customItemModel())
+                    .lang("Check Valve")
                     .register();
 
     // Load this class
